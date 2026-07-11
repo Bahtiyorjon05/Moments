@@ -6,14 +6,24 @@ dotenv.config()
 // UUIDs / timestamps come back as strings — keep numeric counts as numbers.
 pg.types.setTypeParser(20, (v) => parseInt(v, 10)) // int8 -> number
 
-export const pool = new pg.Pool({
-  host: process.env.PGHOST || 'localhost',
-  port: Number(process.env.PGPORT) || 5432,
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD || '',
-  database: process.env.PGDATABASE || 'moments',
-  max: 10,
-})
+// Prefer a single DATABASE_URL (Supabase / Neon / Vercel Postgres) when present,
+// otherwise fall back to discrete PG* vars (local development).
+export const pool = new pg.Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+        max: Number(process.env.PG_POOL_MAX) || 5,
+      }
+    : {
+        host: process.env.PGHOST || 'localhost',
+        port: Number(process.env.PGPORT) || 5432,
+        user: process.env.PGUSER || 'postgres',
+        password: process.env.PGPASSWORD || '',
+        database: process.env.PGDATABASE || 'moments',
+        max: 10,
+      }
+)
 
 export const query = (text, params) => pool.query(text, params)
 

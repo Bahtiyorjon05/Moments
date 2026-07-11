@@ -3,6 +3,7 @@ import { Camera, UserPlus } from 'lucide-react'
 import Stories from '../components/feed/Stories.jsx'
 import PostCard from '../components/feed/PostCard.jsx'
 import SuggestionsRail from '../components/feed/SuggestionsRail.jsx'
+import InstallBanner from '../components/pwa/InstallBanner.jsx'
 import Empty from '../components/ui/Empty.jsx'
 import Button from '../components/ui/Button.jsx'
 import { FullSpinner } from '../components/ui/Spinner.jsx'
@@ -37,6 +38,7 @@ export default function Home() {
     <div className="max-w-[975px] mx-auto w-full flex justify-center gap-8 px-2 sm:px-4">
       <div className="w-full max-w-[500px] pt-6">
         <Stories />
+        <InstallBanner />
 
         {posts === null ? (
           <>

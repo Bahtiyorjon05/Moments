@@ -1,5 +1,6 @@
 // Thin fetch client for the Moments API. Handles JSON, auth token, and errors.
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+// In production (Vercel) the API is same-origin at /api; in dev it's the local server.
+const BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:4000/api')
 
 let token = localStorage.getItem('moments_token') || null
 

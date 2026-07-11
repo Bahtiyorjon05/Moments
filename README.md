@@ -31,7 +31,9 @@ A premium, full‑stack social app — photos, videos, reels, stories, likes, co
 | ❤️ **Notifications** | Likes, comments & follows grouped by time, with follow‑back |
 | 🔍 **Search** | Debounced people search |
 | ➕ **Create** | Upload (auto‑resized) or pick a sample, add a caption & location, and post instantly |
-| 🌗 **Theming** | Dark‑first with a one‑tap light mode; fully responsive with a mobile bottom‑nav |
+| 🌗 **Theming** | Dark‑first with a one‑tap light mode (visible toggle everywhere); fully responsive — phone, tablet & desktop |
+| 📲 **Installable PWA** | Add to your Home Screen on iPhone & Android straight from the browser — no App Store, no APK |
+| 🚀 **Landing page** | A polished marketing landing with hero, live device mockup, features & install CTA |
 | 🔐 **Auth** | JWT auth with register / login and a one‑click demo account |
 
 ---
@@ -152,9 +154,19 @@ GET    /api/notifications                     POST /api/notifications/read
 
 ---
 
-## ☁️ Deploying
+## ☁️ Deploying (Vercel + hosted Postgres)
 
-The frontend deploys to **Vercel** as a static SPA (`vercel.json` includes SPA rewrites). Point `VITE_API_URL` at your hosted API, and deploy the `server/` app to any Node host (Render, Railway, Fly.io, a VPS…) with a managed Postgres instance.
+The whole app deploys to **Vercel** as one project: the Vite SPA (static) plus the Express API as a serverless function at `/api/*` (`api/index.js`), backed by a free hosted Postgres (Supabase / Neon).
+
+```bash
+# 1. Point setup at your hosted DB and load schema + data
+DATABASE_URL="postgres://…" npm run db:setup && DATABASE_URL="postgres://…" npm run db:seed
+# 2. Set DATABASE_URL and JWT_SECRET in the Vercel project env
+# 3. Deploy
+vercel --prod
+```
+
+See **[DEPLOY.md](DEPLOY.md)** for the full step‑by‑step (Supabase/Neon setup, env vars, PWA install).
 
 ---
 

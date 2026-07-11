@@ -40,9 +40,23 @@ async function applySchema() {
   await client.end()
 }
 
+async function applySchemaViaUrl() {
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  await client.connect()
+  const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8')
+  await client.query(sql)
+  console.log('✓ Applied schema.sql to DATABASE_URL')
+  await client.end()
+}
+
 try {
-  await ensureDatabase()
-  await applySchema()
+  if (process.env.DATABASE_URL) {
+    // Hosted DB (Supabase/Neon/Vercel) — the database already exists, just apply schema.
+    await applySchemaViaUrl()
+  } else {
+    await ensureDatabase()
+    await applySchema()
+  }
   console.log('\n✅ Database ready. Run `npm run db:seed` to load demo data.')
 } catch (err) {
   console.error('\n✗ Setup failed:', err.message)

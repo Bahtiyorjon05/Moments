@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Home, Search, Compass, Clapperboard, MessageCircle, Heart,
-  PlusSquare, Menu, Moon, Sun, LogOut, Bookmark, Settings,
+  PlusSquare, Menu, Moon, Sun, LogOut, Bookmark, Settings, Download,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Logo, { LogoMark } from '../ui/Logo.jsx'
 import Avatar from '../ui/Avatar.jsx'
 import { useAuth } from '../../store/auth.js'
 import { useUI } from '../../store/ui.js'
+import { usePWA } from '../../store/pwa.js'
 
 function Item({ to, icon: Icon, label, onClick, badge, end, compact }) {
   const content = (active) => (
@@ -43,6 +44,7 @@ function Item({ to, icon: Icon, label, onClick, badge, end, compact }) {
 export default function Sidebar({ compact, unread }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme, setCreateOpen, setSearchOpen } = useUI()
+  const { installed, promptInstall } = usePWA()
   const [menu, setMenu] = useState(false)
   const loc = useLocation()
 
@@ -76,6 +78,14 @@ export default function Sidebar({ compact, unread }) {
           {!compact && <span className="text-[15px]">Profile</span>}
         </NavLink>
       </nav>
+
+      {/* Always-visible theme switch + install */}
+      <div className="flex flex-col gap-1 mb-1">
+        {!installed && (
+          <Item onClick={promptInstall} icon={Download} label="Install app" compact={compact} />
+        )}
+        <Item onClick={toggleTheme} icon={theme === 'dark' ? Sun : Moon} label={theme === 'dark' ? 'Light mode' : 'Dark mode'} compact={compact} />
+      </div>
 
       <div className="relative">
         <AnimatePresence>
