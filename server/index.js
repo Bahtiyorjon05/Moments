@@ -1,0 +1,47 @@
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+
+import authRoutes from './routes/auth.js'
+import postRoutes from './routes/posts.js'
+import userRoutes from './routes/users.js'
+import storyRoutes from './routes/stories.js'
+import chatRoutes from './routes/chat.js'
+import notifRoutes from './routes/notifications.js'
+import { pool } from './db.js'
+
+dotenv.config()
+
+const app = express()
+const PORT = process.env.PORT || 4000
+
+app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(',') || true, credentials: true }))
+app.use(express.json({ limit: '12mb' })) // room for base64 image uploads
+
+app.get('/api/health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1')
+    res.json({ ok: true, db: 'connected', ts: new Date().toISOString() })
+  } catch (e) {
+    res.status(503).json({ ok: false, db: 'down', error: e.message })
+  }
+})
+
+app.use('/api/auth', authRoutes)
+app.use('/api/posts', postRoutes)
+app.use('/api/users', userRoutes)
+app.use('/api/stories', storyRoutes)
+app.use('/api/chat', chatRoutes)
+app.use('/api/notifications', notifRoutes)
+
+// 404 + error handlers
+app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }))
+app.use((err, _req, res, _next) => {
+  console.error(err)
+  res.status(500).json({ error: err.message || 'Server error' })
+})
+
+app.listen(PORT, () => {
+  console.log(`\n🚀 Moments API running at http://localhost:${PORT}/api`)
+  console.log(`   Health: http://localhost:${PORT}/api/health\n`)
+})
