@@ -31,7 +31,15 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallbackDenylist: [/^\/api/],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            // Never let the service worker touch the API — always go to network.
+            urlPattern: ({ url }) => url.pathname.startsWith('/api'),
+            handler: 'NetworkOnly',
+          },
           {
             urlPattern: ({ url }) => url.origin === 'https://picsum.photos' || url.origin === 'https://i.pravatar.cc',
             handler: 'CacheFirst',
