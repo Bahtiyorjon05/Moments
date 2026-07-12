@@ -1,11 +1,14 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight, MapPin, Play } from 'lucide-react'
+import { Heart, MessageCircle, Send, Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Volume2, VolumeX } from 'lucide-react'
 import Avatar from '../ui/Avatar.jsx'
 import UserName from '../ui/UserName.jsx'
 import CommentsModal from './CommentsModal.jsx'
 import FollowListModal from './FollowListModal.jsx'
+import PostMenu from './PostMenu.jsx'
+import Modal from '../ui/Modal.jsx'
+import Button from '../ui/Button.jsx'
 import { api } from '../../lib/api.js'
 import { useAuth } from '../../store/auth.js'
 import { useUI } from '../../store/ui.js'
@@ -22,10 +25,31 @@ export default function PostCard({ post, onChange }) {
   const [burst, setBurst] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
+  const [videoMuted, setVideoMuted] = useState(true)
+  const [caption, setCaption] = useState(post.caption)
+  const [editing, setEditing] = useState(false)
+  const [editText, setEditText] = useState(post.caption)
+  const [deleted, setDeleted] = useState(false)
   const lastTap = useRef(0)
 
   const media = post.media || []
   const multi = media.length > 1
+  const isVideo = media[idx]?.type === 'video'
+
+  async function saveEdit() {
+    setEditing(false)
+    setCaption(editText)
+    try { await api.editPost(post.id, { caption: editText }) }
+    catch { toast('Could not save', 'error'); setCaption(post.caption) }
+  }
+  async function del() {
+    if (!confirm('Delete this post?')) return
+    setDeleted(true)
+    try { await api.deletePost(post.id); toast('Deleted', 'success'); onChange?.() }
+    catch { setDeleted(false); toast('Could not delete', 'error') }
+  }
+
+  if (deleted) return null
 
   async function toggleLike(forceOn = false) {
     const next = forceOn ? true : !liked
@@ -89,9 +113,7 @@ export default function PostCard({ post, onChange }) {
             </span>
           )}
         </div>
-        <button className="p-1.5 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)]">
-          <MoreHorizontal size={20} />
-        </button>
+        <PostMenu post={post} onEdit={() => { setEditText(caption); setEditing(true) }} onDelete={del} className="text-[var(--text-muted)]" />
       </div>
 
       {/* Media */}
@@ -105,7 +127,7 @@ export default function PostCard({ post, onChange }) {
                 poster={media[idx]?.poster}
                 initial={{ opacity: 0.4 }} animate={{ opacity: 1 }}
                 className="absolute inset-0 w-full h-full object-cover"
-                muted loop autoPlay playsInline
+                muted={videoMuted} loop autoPlay playsInline
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
@@ -124,6 +146,15 @@ export default function PostCard({ post, onChange }) {
             <span className="absolute top-3 left-3 z-10 flex items-center gap-1 text-white text-xs font-semibold bg-black/45 rounded-full px-2 py-0.5 backdrop-blur">
               <Play size={12} className="fill-white" /> Reel
             </span>
+          )}
+
+          {isVideo && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setVideoMuted((m) => !m) }}
+              className="absolute bottom-3 right-3 z-10 w-9 h-9 rounded-full bg-black/50 backdrop-blur grid place-items-center text-white hover:bg-black/70 transition"
+            >
+              {videoMuted ? <VolumeX size={17} /> : <Volume2 size={17} />}
+            </button>
           )}
 
           {/* double-tap heart burst */}
@@ -181,10 +212,10 @@ export default function PostCard({ post, onChange }) {
           </button>
         )}
 
-        {post.caption && (
+        {caption && (
           <p className="text-sm mt-1 whitespace-pre-line break-words">
             <UserName user={post.author} className="mr-1.5" />
-            {post.caption}
+            {caption}
           </p>
         )}
 
@@ -207,6 +238,17 @@ export default function PostCard({ post, onChange }) {
       />
 
       <FollowListModal open={showLikes} onClose={() => setShowLikes(false)} type="likes" postId={post.id} />
+
+      <Modal open={editing} onClose={() => setEditing(false)} title="Edit caption" maxWidth={440}>
+        <div className="p-5">
+          <textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={4} autoFocus
+            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl p-3 text-sm outline-none focus:border-[var(--color-brand-purple)] resize-none" />
+          <div className="flex justify-end gap-2 mt-3">
+            <Button variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button onClick={saveEdit}>Save</Button>
+          </div>
+        </div>
+      </Modal>
     </article>
   )
 }

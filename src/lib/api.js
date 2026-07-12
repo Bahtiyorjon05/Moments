@@ -60,6 +60,7 @@ export const api = {
   saved: () => get('/posts/saved'),
   post: (id) => get(`/posts/${id}`),
   createPost: (b) => post('/posts', b),
+  editPost: (id, b) => patch(`/posts/${id}`, b),
   deletePost: (id) => del(`/posts/${id}`),
   like: (id) => post(`/posts/${id}/like`),
   unlike: (id) => del(`/posts/${id}/like`),
@@ -84,11 +85,17 @@ export const api = {
   stories: () => get('/stories'),
   addStory: (b) => post('/stories', b),
   viewStory: (id) => post(`/stories/${id}/view`),
+  likeStory: (id) => post(`/stories/${id}/like`),
+  unlikeStory: (id) => del(`/stories/${id}/like`),
+  replyStory: (id, body) => post(`/stories/${id}/reply`, { body }),
+  deleteStory: (id) => del(`/stories/${id}`),
 
   // chat
   conversations: () => get('/chat/conversations'),
   messages: (id) => get(`/chat/conversations/${id}/messages`),
-  sendMessage: (id, body) => post(`/chat/conversations/${id}/messages`, { body }),
+  sendMessage: (id, body, replyToId) => post(`/chat/conversations/${id}/messages`, { body, replyToId }),
+  editMessage: (id, body) => patch(`/chat/messages/${id}`, { body }),
+  deleteMessage: (id) => del(`/chat/messages/${id}`),
   startChat: (username) => post(`/chat/with/${username}`),
 
   // notifications

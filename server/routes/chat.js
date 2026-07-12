@@ -27,8 +27,11 @@ router.get('/conversations/:id/messages', requireAuth, async (req, res) => {
   const member = await query('SELECT 1 FROM conversation_members WHERE conversation_id = $1 AND user_id = $2', [req.params.id, req.user.id])
   if (!member.rowCount) return res.status(403).json({ error: 'Not a member' })
   const { rows } = await query(
-    `SELECT id, body, sender_id, created_at FROM messages
-     WHERE conversation_id = $1 ORDER BY created_at ASC`,
+    `SELECT m.id, m.body, m.sender_id, m.created_at, m.edited, m.reply_to_id,
+       (SELECT json_build_object('id', r.id, 'body', r.body, 'sender_id', r.sender_id)
+        FROM messages r WHERE r.id = m.reply_to_id) AS reply_to
+     FROM messages m
+     WHERE m.conversation_id = $1 ORDER BY m.created_at ASC`,
     [req.params.id]
   )
   res.json(rows)
@@ -37,14 +40,41 @@ router.get('/conversations/:id/messages', requireAuth, async (req, res) => {
 // POST /api/chat/conversations/:id/messages
 router.post('/conversations/:id/messages', requireAuth, async (req, res) => {
   const body = (req.body?.body || '').trim()
+  const replyTo = req.body?.replyToId || null
   if (!body) return res.status(400).json({ error: 'Message cannot be empty' })
   const member = await query('SELECT 1 FROM conversation_members WHERE conversation_id = $1 AND user_id = $2', [req.params.id, req.user.id])
   if (!member.rowCount) return res.status(403).json({ error: 'Not a member' })
   const { rows } = await query(
-    'INSERT INTO messages (conversation_id, sender_id, body) VALUES ($1,$2,$3) RETURNING id, body, sender_id, created_at',
+    `INSERT INTO messages (conversation_id, sender_id, body, reply_to_id) VALUES ($1,$2,$3,$4)
+     RETURNING id, body, sender_id, created_at, edited, reply_to_id`,
+    [req.params.id, req.user.id, body, replyTo]
+  )
+  let reply_to = null
+  if (replyTo) {
+    const r = await query('SELECT id, body, sender_id FROM messages WHERE id = $1', [replyTo])
+    reply_to = r.rows[0] || null
+  }
+  res.status(201).json({ ...rows[0], reply_to })
+})
+
+// PATCH /api/chat/messages/:id — edit own message
+router.patch('/messages/:id', requireAuth, async (req, res) => {
+  const body = (req.body?.body || '').trim()
+  if (!body) return res.status(400).json({ error: 'Message cannot be empty' })
+  const { rows } = await query(
+    `UPDATE messages SET body = $3, edited = true WHERE id = $1 AND sender_id = $2
+     RETURNING id, body, sender_id, created_at, edited, reply_to_id`,
     [req.params.id, req.user.id, body]
   )
-  res.status(201).json(rows[0])
+  if (!rows[0]) return res.status(403).json({ error: 'Not allowed' })
+  res.json(rows[0])
+})
+
+// DELETE /api/chat/messages/:id — delete own message
+router.delete('/messages/:id', requireAuth, async (req, res) => {
+  const { rowCount } = await query('DELETE FROM messages WHERE id = $1 AND sender_id = $2', [req.params.id, req.user.id])
+  if (!rowCount) return res.status(403).json({ error: 'Not allowed' })
+  res.json({ ok: true })
 })
 
 // POST /api/chat/with/:username — get or create a 1:1 conversation

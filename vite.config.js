@@ -4,8 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+// We only use nsfwjs's MobileNetV2 model — stub the other (huge) bundled models
+// so ~33MB of Inception weights don't end up in the build.
+const excludeHeavyModels = {
+  name: 'exclude-heavy-nsfw-models',
+  enforce: 'pre',
+  load(id) {
+    if (/nsfwjs[\\/].*models[\\/](inception_v3|mobilenet_v2_mid)[\\/]/.test(id)) return 'export default {}'
+    return null
+  },
+}
+
 export default defineConfig({
   plugins: [
+    excludeHeavyModels,
     react(),
     tailwindcss(),
     VitePWA({
@@ -30,6 +42,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Don't precache the huge ML model / tfjs chunks — they load on demand.
+        globIgnores: ['**/group1-shard*.js', '**/model.min-*.js'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/api/],
         skipWaiting: true,
         clientsClaim: true,

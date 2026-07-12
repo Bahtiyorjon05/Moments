@@ -107,6 +107,13 @@ CREATE TABLE story_views (
   PRIMARY KEY (story_id, user_id)
 );
 
+CREATE TABLE story_likes (
+  story_id   UUID REFERENCES stories(id) ON DELETE CASCADE,
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (story_id, user_id)
+);
+
 -- ── Direct messages ─────────────────────────────────────
 CREATE TABLE conversations (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -126,6 +133,8 @@ CREATE TABLE messages (
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   sender_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   body            TEXT NOT NULL,
+  reply_to_id     UUID REFERENCES messages(id) ON DELETE SET NULL,
+  edited          BOOLEAN DEFAULT FALSE,
   created_at      TIMESTAMPTZ DEFAULT now()
 );
 

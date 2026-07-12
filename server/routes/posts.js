@@ -76,6 +76,19 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
+// PATCH /api/posts/:id — edit own caption / location
+router.patch('/:id', requireAuth, async (req, res) => {
+  const { caption, location } = req.body || {}
+  const { rows } = await query(
+    `UPDATE posts SET caption = COALESCE($3, caption), location = COALESCE($4, location)
+     WHERE id = $1 AND user_id = $2 RETURNING id`,
+    [req.params.id, req.user.id, caption ?? null, location ?? null]
+  )
+  if (!rows[0]) return res.status(403).json({ error: 'Not allowed' })
+  const post = await fetchPostById(req.params.id, req.user.id)
+  res.json(post)
+})
+
 // DELETE /api/posts/:id
 router.delete('/:id', requireAuth, async (req, res) => {
   const { rowCount } = await query('DELETE FROM posts WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id])

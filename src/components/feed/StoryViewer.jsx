@@ -1,25 +1,55 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Heart, Send } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Heart, Send, Trash2 } from 'lucide-react'
 import Avatar from '../ui/Avatar.jsx'
 import UserName from '../ui/UserName.jsx'
 import { api } from '../../lib/api.js'
+import { useUI } from '../../store/ui.js'
 import { timeAgo } from '../../lib/format.js'
 
 const DURATION = 5000 // ms per frame
 
-export default function StoryViewer({ groups, startGroup = 0, onClose }) {
+export default function StoryViewer({ groups, startGroup = 0, onClose, onDeleted }) {
+  const { toast } = useUI()
   const [gi, setGi] = useState(startGroup)
   const [fi, setFi] = useState(0)
   const [progress, setProgress] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
   const raf = useRef()
   const start = useRef()
 
   const group = groups[gi]
   const frames = group?.items || []
   const frame = frames[fi]
+  const mine = frame?.mine
+
+  useEffect(() => {
+    setLiked(frame?.liked || false)
+    setLikeCount(frame?.like_count || 0)
+    setReplyText('')
+  }, [frame?.id])
+
+  async function toggleLike() {
+    const next = !liked
+    setLiked(next); setLikeCount((c) => c + (next ? 1 : -1))
+    try { next ? await api.likeStory(frame.id) : await api.unlikeStory(frame.id) }
+    catch { setLiked(!next); setLikeCount((c) => c + (next ? -1 : 1)) }
+  }
+  async function sendReply() {
+    const body = replyText.trim(); if (!body) return
+    setReplyText('')
+    try { await api.replyStory(frame.id, body); toast('Reply sent 💬', 'success') }
+    catch (e) { toast(e.message || 'Could not send', 'error') }
+  }
+  async function del() {
+    if (!confirm('Delete this story?')) return
+    try { await api.deleteStory(frame.id); onDeleted?.(); onClose() }
+    catch { toast('Could not delete', 'error') }
+  }
 
   const advance = useCallback(() => {
     if (fi < frames.length - 1) {
@@ -98,10 +128,18 @@ export default function StoryViewer({ groups, startGroup = 0, onClose }) {
           <Avatar src={group.author.avatar_url} alt={group.author.username} size={34} />
           <UserName user={group.author} className="text-sm text-white" link={false} />
           <span className="text-xs text-white/70">{timeAgo(frame.created_at)}</span>
+          <div className="flex-1" />
+          {mine && (
+            <button onClick={del} onPointerDown={(e) => e.stopPropagation()} className="p-1.5 rounded-full hover:bg-white/15" title="Delete story"><Trash2 size={18} /></button>
+          )}
         </div>
 
         {/* media */}
-        <img src={frame.media_url} alt="" className="w-full h-full object-cover" draggable={false} />
+        {frame.type === 'video' ? (
+          <video src={frame.media_url} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+        ) : (
+          <img src={frame.media_url} alt="" className="w-full h-full object-cover" draggable={false} />
+        )}
 
         {/* tap zones */}
         <button className="absolute inset-y-0 left-0 w-1/3 z-[5]" onClick={back}
@@ -109,15 +147,30 @@ export default function StoryViewer({ groups, startGroup = 0, onClose }) {
         <button className="absolute inset-y-0 right-0 w-1/3 z-[5]" onClick={advance}
           onPointerDown={() => setPaused(true)} onPointerUp={() => setPaused(false)} aria-label="Next" />
 
-        {/* reply bar */}
-        <div className="absolute bottom-0 inset-x-0 p-4 flex items-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-10">
-          <input
-            placeholder={`Reply to ${group.author.username}…`}
-            onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
-            className="flex-1 h-11 rounded-full bg-white/10 border border-white/25 px-4 text-white text-sm placeholder:text-white/60 outline-none"
-          />
-          <button className="p-2.5 text-white hover:scale-110 transition"><Heart size={24} /></button>
-          <button className="p-2.5 text-white hover:scale-110 transition"><Send size={22} /></button>
+        {/* reply / like bar */}
+        <div className="absolute bottom-0 inset-x-0 p-4 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent z-10"
+          onPointerDown={(e) => e.stopPropagation()}>
+          {mine ? (
+            <div className="flex-1 flex items-center gap-2 text-white/90 text-sm">
+              <Heart size={18} className="fill-white text-white" /> {likeCount} {likeCount === 1 ? 'like' : 'likes'} on your story
+            </div>
+          ) : (
+            <>
+              <form onSubmit={(e) => { e.preventDefault(); sendReply() }} className="flex-1">
+                <input
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Reply to ${group.author.username}…`}
+                  onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
+                  className="w-full h-11 rounded-full bg-white/10 border border-white/25 px-4 text-white text-sm placeholder:text-white/60 outline-none"
+                />
+              </form>
+              <button onClick={toggleLike} className="p-2.5 text-white hover:scale-110 transition">
+                <Heart size={24} className={liked ? 'fill-[var(--color-brand-coral)] text-[var(--color-brand-coral)]' : ''} />
+              </button>
+              <button onClick={sendReply} className="p-2.5 text-white hover:scale-110 transition"><Send size={22} /></button>
+            </>
+          )}
         </div>
       </motion.div>
     </div>,

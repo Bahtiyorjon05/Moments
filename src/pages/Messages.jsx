@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Send, MessageCircle, Phone, Video, Info, Smile } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Phone, Video, Info, Smile, X, Reply, Pencil, Trash2 } from 'lucide-react'
 import Avatar from '../components/ui/Avatar.jsx'
 import EmojiPicker from '../components/ui/EmojiPicker.jsx'
 import UserName from '../components/ui/UserName.jsx'
@@ -100,6 +100,8 @@ function Thread({ convo, onSent }) {
     catch { toast('Could not access your camera/microphone', 'error') }
   }
   const [text, setText] = useState('')
+  const [replyTo, setReplyTo] = useState(null)
+  const [editing, setEditing] = useState(null) // message being edited
   const scrollRef = useRef(null)
   const endRef = useRef(null)
 
@@ -125,12 +127,25 @@ function Thread({ convo, onSent }) {
     e.preventDefault()
     const body = text.trim()
     if (!body) return
+
+    // Editing an existing message
+    if (editing) {
+      const id = editing.id
+      setMessages((m) => m.map((x) => (x.id === id ? { ...x, body, edited: true } : x)))
+      setEditing(null); setText('')
+      try { await api.editMessage(id, body) } catch { toast('Could not edit', 'error') }
+      return
+    }
+
     setText('')
-    const optimistic = { id: `tmp-${Date.now()}`, body, sender_id: user.id, created_at: new Date().toISOString(), pending: true }
+    const replyId = replyTo?.id || null
+    const reply_to = replyTo ? { id: replyTo.id, body: replyTo.body, sender_id: replyTo.sender_id } : null
+    setReplyTo(null)
+    const optimistic = { id: `tmp-${Date.now()}`, body, sender_id: user.id, created_at: new Date().toISOString(), pending: true, reply_to }
     setMessages((m) => [...(m || []), optimistic])
     requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }))
     try {
-      const saved = await api.sendMessage(convo.id, body)
+      const saved = await api.sendMessage(convo.id, body, replyId)
       setMessages((m) => m.map((x) => (x.id === optimistic.id ? saved : x)))
       onSent?.()
     } catch {
@@ -138,6 +153,13 @@ function Thread({ convo, onSent }) {
       setText(body)
     }
   }
+
+  async function removeMsg(id) {
+    setMessages((m) => m.filter((x) => x.id !== id))
+    try { await api.deleteMessage(id) } catch { toast('Could not delete', 'error') }
+  }
+  function startEdit(m) { setEditing(m); setText(m.body); setReplyTo(null) }
+  function startReply(m) { setReplyTo(m); setEditing(null) }
 
   return (
     <>
@@ -170,18 +192,8 @@ function Thread({ convo, onSent }) {
               const prev = messages[i - 1]
               const grouped = prev && prev.sender_id === m.sender_id
               return (
-                <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} ${grouped ? 'mt-0.5' : 'mt-3'}`}>
-                  <div
-                    className={`max-w-[72%] px-3.5 py-2 rounded-2xl text-sm break-words ${
-                      mine
-                        ? 'brand-gradient text-white rounded-br-md'
-                        : 'bg-[var(--surface-strong)] rounded-bl-md'
-                    } ${m.pending ? 'opacity-60' : ''}`}
-                    title={clockTime(m.created_at)}
-                  >
-                    {m.body}
-                  </div>
-                </div>
+                <MessageBubble key={m.id} m={m} mine={mine} grouped={grouped}
+                  onReply={() => startReply(m)} onEdit={() => startEdit(m)} onDelete={() => removeMsg(m.id)} />
               )
             })}
             <div ref={endRef} />
@@ -198,6 +210,16 @@ function Thread({ convo, onSent }) {
             </div>
           )}
         </AnimatePresence>
+        {(replyTo || editing) && (
+          <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl surface text-sm">
+            <div className="w-1 self-stretch rounded-full brand-gradient" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-[var(--color-brand-purple)]">{editing ? 'Editing message' : `Replying to ${replyTo.sender_id === user.id ? 'yourself' : convo.peer?.username}`}</p>
+              <p className="text-xs text-[var(--text-muted)] truncate">{(editing || replyTo).body}</p>
+            </div>
+            <button type="button" onClick={() => { setReplyTo(null); setEditing(null); if (editing) setText('') }} className="p-1 rounded-full hover:bg-[var(--surface-strong)]"><X size={15} /></button>
+          </div>
+        )}
         <div className="flex items-center gap-2 surface rounded-full pl-2 pr-2 h-12">
           <button type="button" onClick={() => setEmojiOpen((o) => !o)}
             className={`w-9 h-9 grid place-items-center rounded-full transition ${emojiOpen ? 'text-[var(--color-brand-purple)] bg-[var(--surface-strong)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-strong)]'}`}>
@@ -206,7 +228,7 @@ function Thread({ convo, onSent }) {
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Message…"
+            placeholder={editing ? 'Edit message…' : 'Message…'}
             className="flex-1 bg-transparent outline-none text-sm"
           />
           <button
@@ -219,5 +241,47 @@ function Thread({ convo, onSent }) {
         </div>
       </form>
     </>
+  )
+}
+
+// A chat bubble with reply-preview, timestamp, and a reply/edit/delete menu.
+function MessageBubble({ m, mine, grouped, onReply, onEdit, onDelete }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={`group flex flex-col ${mine ? 'items-end' : 'items-start'} ${grouped ? 'mt-0.5' : 'mt-3'}`}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={`max-w-[78%] px-3.5 py-2 rounded-2xl text-sm break-words text-left ${
+          mine ? 'brand-gradient text-white rounded-br-md' : 'bg-[var(--surface-strong)] rounded-bl-md'
+        } ${m.pending ? 'opacity-60' : ''}`}
+      >
+        {m.reply_to && (
+          <span className={`block mb-1 pl-2 border-l-2 text-xs opacity-85 truncate ${mine ? 'border-white/50' : 'border-[var(--border-strong)]'}`}>
+            {m.reply_to.body}
+          </span>
+        )}
+        {m.body}
+      </button>
+
+      {open && (
+        <div className="flex items-center gap-1 mt-1">
+          <Act icon={Reply} onClick={() => { onReply(); setOpen(false) }}>Reply</Act>
+          {mine && <Act icon={Pencil} onClick={() => { onEdit(); setOpen(false) }}>Edit</Act>}
+          {mine && <Act icon={Trash2} danger onClick={() => { onDelete(); setOpen(false) }}>Delete</Act>}
+        </div>
+      )}
+
+      <span className="text-[10px] text-[var(--text-faint)] mt-0.5 px-1">
+        {clockTime(m.created_at)}{m.edited ? ' · edited' : ''}
+      </span>
+    </div>
+  )
+}
+
+function Act({ icon: Icon, children, onClick, danger }) {
+  return (
+    <button onClick={onClick} className={`flex items-center gap-1 px-2 py-1 rounded-full surface text-xs font-medium hover:bg-[var(--surface-strong)] ${danger ? 'text-[var(--color-brand-coral)]' : ''}`}>
+      <Icon size={12} /> {children}
+    </button>
   )
 }

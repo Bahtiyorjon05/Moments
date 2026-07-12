@@ -3,10 +3,13 @@ import { Heart, MessageCircle, Send, Bookmark, Music2, Volume2, VolumeX, Play } 
 import Avatar from '../components/ui/Avatar.jsx'
 import UserName from '../components/ui/UserName.jsx'
 import CommentsModal from '../components/feed/CommentsModal.jsx'
+import FollowListModal from '../components/feed/FollowListModal.jsx'
+import PostMenu from '../components/feed/PostMenu.jsx'
 import { FullSpinner } from '../components/ui/Spinner.jsx'
 import { api } from '../lib/api.js'
 import { useUI } from '../store/ui.js'
 import { formatCount } from '../lib/format.js'
+import { sharePost } from '../lib/share.js'
 
 export default function Reels() {
   const [reels, setReels] = useState(null)
@@ -44,6 +47,8 @@ function Reel({ reel, muted, setMuted }) {
   const [likeCount, setLikeCount] = useState(reel.like_count)
   const [saved, setSaved] = useState(reel.saved)
   const [comments, setComments] = useState(false)
+  const [showLikes, setShowLikes] = useState(false)
+  const [gone, setGone] = useState(false)
 
   useEffect(() => {
     const el = ref.current
@@ -78,7 +83,15 @@ function Reel({ reel, muted, setMuted }) {
     catch { setSaved(!next) }
   }
 
+  async function del() {
+    if (!confirm('Delete this reel?')) return
+    setGone(true)
+    try { await api.deletePost(reel.id); toast('Reel deleted', 'success') }
+    catch { setGone(false); toast('Could not delete', 'error') }
+  }
+
   const video = reel.media?.[0]
+  if (gone) return null
 
   return (
     <div ref={ref} className="snap-start h-full w-full relative md:grid md:place-items-center md:py-3">
@@ -98,10 +111,13 @@ function Reel({ reel, muted, setMuted }) {
           </button>
         )}
 
-        {/* mute */}
-        <button onClick={() => setMuted((m) => !m)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/45 backdrop-blur grid place-items-center text-white">
+        {/* mute + menu */}
+        <button onClick={() => setMuted((m) => !m)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/45 backdrop-blur grid place-items-center text-white z-10">
           {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
         </button>
+        <div className="absolute top-4 left-4 z-10 text-white">
+          <PostMenu post={reel} onDelete={del} />
+        </div>
 
         {/* gradient + meta */}
         <div className="absolute inset-x-0 bottom-0 pt-10 px-4 pb-6 pr-16 bg-gradient-to-t from-black/85 via-black/35 to-transparent text-white z-10">
@@ -117,27 +133,30 @@ function Reel({ reel, muted, setMuted }) {
 
         {/* side rail */}
         <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 text-white">
-          <RailBtn onClick={toggleLike} count={likeCount}>
+          <RailBtn onClick={toggleLike} onCount={() => setShowLikes(true)} count={likeCount}>
             <Heart size={28} className={liked ? 'fill-[var(--color-brand-coral)] text-[var(--color-brand-coral)]' : ''} />
           </RailBtn>
           <RailBtn onClick={() => setComments(true)} count={reel.comment_count}>
             <MessageCircle size={28} />
           </RailBtn>
-          <RailBtn><Send size={26} /></RailBtn>
+          <RailBtn onClick={() => sharePost(reel, toast)}><Send size={26} /></RailBtn>
           <RailBtn onClick={toggleSave}><Bookmark size={26} className={saved ? 'fill-white' : ''} /></RailBtn>
         </div>
       </div>
 
       <CommentsModal open={comments} onClose={() => setComments(false)} post={{ ...reel, liked, like_count: likeCount }} />
+      <FollowListModal open={showLikes} onClose={() => setShowLikes(false)} type="likes" postId={reel.id} />
     </div>
   )
 }
 
-function RailBtn({ children, count, onClick }) {
+function RailBtn({ children, count, onClick, onCount }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 active:scale-90 transition">
-      <span className="drop-shadow-lg">{children}</span>
-      {count > 0 && <span className="text-xs font-semibold">{formatCount(count)}</span>}
-    </button>
+    <div className="flex flex-col items-center gap-1">
+      <button onClick={onClick} className="active:scale-90 transition drop-shadow-lg">{children}</button>
+      {count > 0 && (onCount
+        ? <button onClick={onCount} className="text-xs font-semibold hover:underline">{formatCount(count)}</button>
+        : <span className="text-xs font-semibold">{formatCount(count)}</span>)}
+    </div>
   )
 }

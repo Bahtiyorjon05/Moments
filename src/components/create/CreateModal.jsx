@@ -6,6 +6,7 @@ import Button from '../ui/Button.jsx'
 import Avatar from '../ui/Avatar.jsx'
 import { api } from '../../lib/api.js'
 import { uploadMedia } from '../../lib/upload.js'
+import { checkNSFW } from '../../lib/nsfw.js'
 import { useAuth } from '../../store/auth.js'
 import { useUI } from '../../store/ui.js'
 
@@ -78,6 +79,8 @@ export default function CreateModal({ onCreated }) {
     try {
       const uploaded = []
       for (const f of files) {
+        // Block explicit content before it ever leaves the device.
+        if (await checkNSFW(f)) { toast('That media looks explicit and was blocked', 'error'); continue }
         if (f.type.startsWith('video/')) {
           const poster = await videoPoster(f)
           const { url } = await uploadMedia(f, setProgress)
@@ -88,6 +91,7 @@ export default function CreateModal({ onCreated }) {
           uploaded.push({ url, type: 'image', poster: '' })
         }
       }
+      if (uploaded.length === 0) { setUploading(false); return }
       if (uploaded.some((m) => m.type === 'video')) setMedia([uploaded.find((m) => m.type === 'video')])
       else setMedia((m) => [...m.filter((x) => x.type !== 'video'), ...uploaded].slice(0, 8))
     } catch (err) {
