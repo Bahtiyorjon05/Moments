@@ -1,0 +1,10 @@
+# Never upload local env or build artifacts to Vercel — the build must use
+# Vercel's own env vars (and same-origin /api), not local dev values.
+.env
+.env.*
+!.env.example
+
+node_modules
+.git
+.vercel
+dist
