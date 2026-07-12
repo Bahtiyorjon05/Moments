@@ -147,18 +147,20 @@ export default function PostCard({ post, onChange }) {
       {/* Media */}
       <div className="relative bg-black select-none" onClick={onImageTap} onDoubleClick={onImageTap}>
         <div className="relative w-full aspect-[4/5] overflow-hidden">
-          <AnimatePresence initial={false} mode="popLayout">
-            {media[idx]?.type === 'video' ? (
-              <motion.video
-                key={idx}
-                ref={videoRef}
-                src={`${media[idx]?.url}#t=0.1`}
-                initial={{ opacity: 0.4 }} animate={{ opacity: 1 }}
-                className="absolute inset-0 w-full h-full object-cover"
-                muted={videoMuted} loop playsInline preload="metadata"
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
+          {isVideo ? (
+            // Plain <video> so the ref forwards reliably (motion.video does not),
+            // letting the IntersectionObserver actually play/pause it.
+            <video
+              key={media[idx]?.url}
+              ref={videoRef}
+              src={media[idx]?.url}
+              poster={media[idx]?.poster || undefined}
+              className="absolute inset-0 w-full h-full object-cover"
+              muted={videoMuted} loop playsInline preload="metadata"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <AnimatePresence initial={false} mode="popLayout">
               <motion.img
                 key={idx}
                 src={media[idx]?.url}
@@ -167,8 +169,8 @@ export default function PostCard({ post, onChange }) {
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
               />
-            )}
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
 
           {post.kind === 'reel' && (
             <span className="absolute top-3 left-3 z-10 flex items-center gap-1 text-white text-xs font-semibold bg-black/45 rounded-full px-2 py-0.5 backdrop-blur">
