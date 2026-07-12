@@ -67,6 +67,7 @@ export const api = {
   unsave: (id) => del(`/posts/${id}/save`),
   comments: (id) => get(`/posts/${id}/comments`),
   addComment: (id, body) => post(`/posts/${id}/comments`, { body }),
+  postLikes: (id) => get(`/posts/${id}/likes`),
 
   // users
   user: (username) => get(`/users/${username}`),

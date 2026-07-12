@@ -7,9 +7,10 @@ const router = Router()
 
 // GET /api/posts/feed — posts from people you follow + your own, newest first.
 router.get('/feed', requireAuth, async (req, res) => {
+  // Feed includes both posts and reels from you + people you follow.
   const posts = await fetchPosts({
     viewerId: req.user.id,
-    where: `p.kind = 'post' AND (p.user_id = $1 OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = $1))`,
+    where: `(p.user_id = $1 OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = $1))`,
   })
   res.json(posts)
 })
@@ -107,6 +108,19 @@ router.post('/:id/save', requireAuth, async (req, res) => {
 router.delete('/:id/save', requireAuth, async (req, res) => {
   await query('DELETE FROM saves WHERE user_id = $1 AND post_id = $2', [req.user.id, req.params.id])
   res.json({ saved: false })
+})
+
+// GET /api/posts/:id/likes — who liked this post
+router.get('/:id/likes', optionalAuth, async (req, res) => {
+  const viewerId = req.user?.id || null
+  const { rows } = await query(
+    `SELECT u.id, u.username, u.name, u.avatar_url, u.is_verified,
+       EXISTS(SELECT 1 FROM follows f WHERE f.following_id = u.id AND f.follower_id = $2) AS is_following
+     FROM likes l JOIN users u ON u.id = l.user_id
+     WHERE l.post_id = $1 ORDER BY l.created_at DESC`,
+    [req.params.id, viewerId]
+  )
+  res.json(rows)
 })
 
 // GET /api/posts/:id/comments

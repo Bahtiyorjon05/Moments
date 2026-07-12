@@ -8,24 +8,28 @@ import { Users } from 'lucide-react'
 import { api } from '../../lib/api.js'
 import { useAuth } from '../../store/auth.js'
 
-// Lists a user's followers or following, each with a working follow toggle.
-export default function FollowListModal({ open, onClose, username, type }) {
+// Lists followers / following / likers, each with a working follow toggle.
+export default function FollowListModal({ open, onClose, username, type, postId }) {
   const [list, setList] = useState(null)
 
   useEffect(() => {
     if (!open || !type) return
     setList(null)
-    const fn = type === 'followers' ? api.followers : api.following
-    fn(username).then(setList).catch(() => setList([]))
-  }, [open, type, username])
+    const p = type === 'likes' ? api.postLikes(postId)
+      : type === 'followers' ? api.followers(username)
+      : api.following(username)
+    p.then(setList).catch(() => setList([]))
+  }, [open, type, username, postId])
+
+  const title = type === 'likes' ? 'Likes' : type === 'followers' ? 'Followers' : 'Following'
 
   return (
-    <Modal open={open} onClose={onClose} title={type === 'followers' ? 'Followers' : 'Following'} maxWidth={420}>
+    <Modal open={open} onClose={onClose} title={title} maxWidth={420}>
       <div className="max-h-[60vh] overflow-y-auto p-2 min-h-[200px]">
         {list === null ? (
           <div className="grid place-items-center py-12"><Spinner /></div>
         ) : list.length === 0 ? (
-          <Empty icon={Users} title={type === 'followers' ? 'No followers yet' : 'Not following anyone yet'} />
+          <Empty icon={Users} title={type === 'likes' ? 'No likes yet' : type === 'followers' ? 'No followers yet' : 'Not following anyone yet'} />
         ) : (
           list.map((u) => <Row key={u.id} u={u} onNavigate={onClose} />)
         )}

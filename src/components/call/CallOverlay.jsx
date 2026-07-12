@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, PhoneIncoming } from 'lucide-react'
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, PhoneIncoming, Volume2, VolumeX } from 'lucide-react'
 import Avatar from '../ui/Avatar.jsx'
 import { useCall } from '../../store/call.js'
 import { useUI } from '../../store/ui.js'
@@ -14,9 +14,28 @@ export default function CallOverlay() {
   const { toast } = useUI()
   const localRef = useRef(null)
   const remoteRef = useRef(null)
+  const remoteAudioRef = useRef(null)
+  const [speakerOff, setSpeakerOff] = useState(false)
 
   useEffect(() => { if (localRef.current && localStream) localRef.current.srcObject = localStream }, [localStream, status])
   useEffect(() => { if (remoteRef.current && remoteStream) remoteRef.current.srcObject = remoteStream }, [remoteStream, status])
+
+  // Remote AUDIO always plays through a dedicated element (video calls mute the
+  // <video> to avoid double audio). This is what was missing → no sound.
+  useEffect(() => {
+    const el = remoteAudioRef.current
+    if (el && remoteStream) {
+      el.srcObject = remoteStream
+      el.play?.().catch(() => {})
+    }
+  }, [remoteStream, status])
+
+  function toggleSpeaker() {
+    const el = remoteAudioRef.current
+    const next = !speakerOff
+    if (el) { el.muted = next; if (!next) el.play?.().catch(() => {}) }
+    setSpeakerOff(next)
+  }
 
   async function onAccept() { try { await accept() } catch { toast('Could not access camera/mic', 'error') } }
 
@@ -56,8 +75,10 @@ export default function CallOverlay() {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           {/* remote (full) */}
           <div className="relative flex-1 overflow-hidden grid place-items-center">
+            {/* remote audio — always present so calls have sound */}
+            <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
             {kind === 'video' ? (
-              <video ref={remoteRef} autoPlay playsInline className="w-full h-full object-cover" />
+              <video ref={remoteRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             ) : null}
             {(kind === 'audio' || status !== 'connected') && (
               <div className="absolute inset-0 grid place-items-center text-center text-white">
@@ -84,6 +105,9 @@ export default function CallOverlay() {
           <div className="p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex items-center justify-center gap-5">
             <CtrlBtn onClick={toggleMute} active={muted} label={muted ? 'Unmute' : 'Mute'}>
               {muted ? <MicOff size={22} /> : <Mic size={22} />}
+            </CtrlBtn>
+            <CtrlBtn onClick={toggleSpeaker} active={speakerOff} label={speakerOff ? 'Speaker on' : 'Speaker off'}>
+              {speakerOff ? <VolumeX size={22} /> : <Volume2 size={22} />}
             </CtrlBtn>
             {kind === 'video' && (
               <CtrlBtn onClick={toggleCamera} active={cameraOff} label={cameraOff ? 'Start video' : 'Stop video'}>

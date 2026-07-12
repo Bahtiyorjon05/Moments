@@ -104,7 +104,7 @@ function Reel({ reel, muted, setMuted }) {
         </button>
 
         {/* gradient + meta */}
-        <div className="absolute inset-x-0 bottom-0 pt-10 px-4 pb-5 pr-16 bg-gradient-to-t from-black/80 via-black/30 to-transparent text-white z-10">
+        <div className="absolute inset-x-0 bottom-0 pt-10 px-4 pb-6 pr-16 bg-gradient-to-t from-black/85 via-black/35 to-transparent text-white z-10">
           <div className="flex items-center gap-2.5 mb-2">
             <Avatar src={reel.author.avatar_url} alt={reel.author.username} size={36} to={`/u/${reel.author.username}`} />
             <UserName user={reel.author} className="text-sm text-white" />
@@ -116,7 +116,7 @@ function Reel({ reel, muted, setMuted }) {
         </div>
 
         {/* side rail */}
-        <div className="absolute right-3 bottom-24 flex flex-col items-center gap-5 text-white">
+        <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 text-white">
           <RailBtn onClick={toggleLike} count={likeCount}>
             <Heart size={28} className={liked ? 'fill-[var(--color-brand-coral)] text-[var(--color-brand-coral)]' : ''} />
           </RailBtn>

@@ -60,19 +60,24 @@ export default function Layout() {
 
   const compact = WIDE.some((p) => loc.pathname.startsWith(p))
   const isMessages = loc.pathname.startsWith('/messages')
+  // Full-screen mobile contexts hide chrome so it can't cover content.
+  const inThread = /^\/messages\/[^/]+/.test(loc.pathname)
+  const isReels = loc.pathname.startsWith('/reels')
+  const immersive = inThread              // chat thread: hide top bar AND bottom nav
+  const hideTopBar = immersive || isReels // reels: hide top bar, keep bottom nav
 
   return (
     <div className="flex min-h-screen">
       <Sidebar compact={compact} unread={unread} />
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar unread={unread} />
-        <main className={`flex-1 w-full ${isMessages ? '' : 'pb-20 md:pb-8'}`}>
+        {!hideTopBar && <TopBar unread={unread} />}
+        <main className={`flex-1 w-full ${isMessages || isReels ? '' : 'pb-20 md:pb-8'}`}>
           <Outlet />
         </main>
       </div>
 
-      <MobileNav />
+      {!immersive && <MobileNav />}
       <Toaster />
       <CreateModal onCreated={refreshUnread} />
       <SearchModal />

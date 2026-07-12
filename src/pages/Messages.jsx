@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, MessageCircle, Phone, Video, Info, Smile } from 'lucide-react'
 import Avatar from '../components/ui/Avatar.jsx'
+import EmojiPicker from '../components/ui/EmojiPicker.jsx'
 import UserName from '../components/ui/UserName.jsx'
 import Empty from '../components/ui/Empty.jsx'
 import Spinner from '../components/ui/Spinner.jsx'
@@ -26,7 +28,7 @@ export default function Messages() {
   const active = convos?.find((c) => c.id === id)
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] md:h-screen flex max-w-[1100px] mx-auto border-x border-[var(--border)]">
+    <div className={`${id ? 'h-[100dvh]' : 'h-[calc(100dvh-3.5rem)]'} md:h-screen flex max-w-[1100px] mx-auto border-x border-[var(--border)]`}>
       {/* list */}
       <div className={`${id ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-[360px] shrink-0 border-r border-[var(--border)]`}>
         <div className="h-16 flex items-center px-5 border-b border-[var(--border)]">
@@ -90,6 +92,7 @@ function Thread({ convo, onSent }) {
   const startCall = useCall((s) => s.startCall)
   const { toast } = useUI()
   const [messages, setMessages] = useState(null)
+  const [emojiOpen, setEmojiOpen] = useState(false)
 
   async function call(kind) {
     if (!convo.peer) return
@@ -187,9 +190,19 @@ function Thread({ convo, onSent }) {
       </div>
 
       {/* composer */}
-      <form onSubmit={send} className="p-3 border-t border-[var(--border)] shrink-0">
-        <div className="flex items-center gap-2 surface rounded-full pl-4 pr-2 h-12">
-          <Smile size={22} className="text-[var(--text-muted)]" />
+      <form onSubmit={send} className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-[var(--border)] shrink-0 relative">
+        <AnimatePresence>
+          {emojiOpen && (
+            <div className="absolute bottom-full left-3 mb-2 z-20">
+              <EmojiPicker onSelect={(e) => setText((t) => t + e)} onClose={() => setEmojiOpen(false)} />
+            </div>
+          )}
+        </AnimatePresence>
+        <div className="flex items-center gap-2 surface rounded-full pl-2 pr-2 h-12">
+          <button type="button" onClick={() => setEmojiOpen((o) => !o)}
+            className={`w-9 h-9 grid place-items-center rounded-full transition ${emojiOpen ? 'text-[var(--color-brand-purple)] bg-[var(--surface-strong)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-strong)]'}`}>
+            <Smile size={22} />
+          </button>
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}

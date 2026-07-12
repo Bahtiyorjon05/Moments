@@ -48,9 +48,7 @@ export const useCall = create((set, get) => ({
 
   _makePc: (peerId) => {
     pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
-    const remote = new MediaStream()
-    set({ remoteStream: remote })
-    pc.ontrack = (e) => { e.streams[0].getTracks().forEach((t) => remote.addTrack(t)); set({ remoteStream: remote }) }
+    pc.ontrack = (e) => { set({ remoteStream: e.streams[0] }) }
     pc.onicecandidate = (e) => { if (e.candidate) get()._send(peerId, 'ice', e.candidate) }
     pc.onconnectionstatechange = () => {
       if (pc?.connectionState === 'connected') set({ status: 'connected' })

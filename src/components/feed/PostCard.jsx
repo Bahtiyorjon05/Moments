@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight, MapPin, Play } from 'lucide-react'
 import Avatar from '../ui/Avatar.jsx'
 import UserName from '../ui/UserName.jsx'
 import CommentsModal from './CommentsModal.jsx'
+import FollowListModal from './FollowListModal.jsx'
 import { api } from '../../lib/api.js'
 import { useAuth } from '../../store/auth.js'
 import { useUI } from '../../store/ui.js'
@@ -20,6 +21,7 @@ export default function PostCard({ post, onChange }) {
   const [idx, setIdx] = useState(0)
   const [burst, setBurst] = useState(false)
   const [showComments, setShowComments] = useState(false)
+  const [showLikes, setShowLikes] = useState(false)
   const lastTap = useRef(0)
 
   const media = post.media || []
@@ -96,16 +98,33 @@ export default function PostCard({ post, onChange }) {
       <div className="relative bg-black select-none" onClick={onImageTap} onDoubleClick={onImageTap}>
         <div className="relative w-full aspect-[4/5] overflow-hidden">
           <AnimatePresence initial={false} mode="popLayout">
-            <motion.img
-              key={idx}
-              src={media[idx]?.url}
-              alt={post.caption}
-              initial={{ opacity: 0.4 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0 w-full h-full object-cover"
-              draggable={false}
-            />
+            {media[idx]?.type === 'video' ? (
+              <motion.video
+                key={idx}
+                src={media[idx]?.url}
+                poster={media[idx]?.poster}
+                initial={{ opacity: 0.4 }} animate={{ opacity: 1 }}
+                className="absolute inset-0 w-full h-full object-cover"
+                muted loop autoPlay playsInline
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <motion.img
+                key={idx}
+                src={media[idx]?.url}
+                alt={post.caption}
+                initial={{ opacity: 0.4 }} animate={{ opacity: 1 }}
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+              />
+            )}
           </AnimatePresence>
+
+          {post.kind === 'reel' && (
+            <span className="absolute top-3 left-3 z-10 flex items-center gap-1 text-white text-xs font-semibold bg-black/45 rounded-full px-2 py-0.5 backdrop-blur">
+              <Play size={12} className="fill-white" /> Reel
+            </span>
+          )}
 
           {/* double-tap heart burst */}
           <AnimatePresence>
@@ -157,7 +176,9 @@ export default function PostCard({ post, onChange }) {
         </div>
 
         {likeCount > 0 && (
-          <p className="text-sm font-semibold mt-1.5">{formatCount(likeCount)} {likeCount === 1 ? 'like' : 'likes'}</p>
+          <button onClick={() => setShowLikes(true)} className="text-sm font-semibold mt-1.5 hover:opacity-70">
+            {formatCount(likeCount)} {likeCount === 1 ? 'like' : 'likes'}
+          </button>
         )}
 
         {post.caption && (
@@ -184,6 +205,8 @@ export default function PostCard({ post, onChange }) {
         onCommentAdded={() => setCommentCount((c) => c + 1)}
         onLikeToggle={toggleLike}
       />
+
+      <FollowListModal open={showLikes} onClose={() => setShowLikes(false)} type="likes" postId={post.id} />
     </article>
   )
 }
