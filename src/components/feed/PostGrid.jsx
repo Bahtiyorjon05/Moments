@@ -16,7 +16,12 @@ export default function PostGrid({ posts, feature = false }) {
             className={`relative group overflow-hidden bg-[var(--surface-strong)] ${big ? 'col-span-2 row-span-2' : ''} aspect-square`}
           >
             {cover?.type === 'video' ? (
-              <video src={cover.url} poster={cover.poster} muted playsInline className="w-full h-full object-cover" />
+              // Show the video's real first frame (#t) rather than a possibly-black generated poster.
+              <video
+                src={`${cover.url}#t=0.1`}
+                muted playsInline preload="metadata"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <img src={cover?.url} alt={p.caption} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
             )}

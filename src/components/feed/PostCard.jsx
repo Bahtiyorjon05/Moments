@@ -38,15 +38,16 @@ export default function PostCard({ post, onChange }) {
   const articleRef = useRef(null)
   const videoRef = useRef(null)
 
-  // Play a feed video only while it's on screen; pause when scrolled away
-  // (so two reels never play at once).
+  // Play a feed video only while it crosses the vertical center of the screen,
+  // so exactly one reel plays at a time. The negative top/bottom margins make the
+  // observer root a thin band in the middle of the viewport.
   useEffect(() => {
     const v = videoRef.current
     if (!v || !isVideo) return
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) v.play().catch(() => {})
       else v.pause()
-    }, { threshold: 0.6 })
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 })
     io.observe(v)
     return () => io.disconnect()
   }, [idx, isVideo])
@@ -151,11 +152,10 @@ export default function PostCard({ post, onChange }) {
               <motion.video
                 key={idx}
                 ref={videoRef}
-                src={media[idx]?.url}
-                poster={media[idx]?.poster}
+                src={`${media[idx]?.url}#t=0.1`}
                 initial={{ opacity: 0.4 }} animate={{ opacity: 1 }}
                 className="absolute inset-0 w-full h-full object-cover"
-                muted={videoMuted} loop playsInline
+                muted={videoMuted} loop playsInline preload="metadata"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (

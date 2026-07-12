@@ -33,22 +33,26 @@ function resizeImageFile(file, max = 1440) {
   })
 }
 
-// Grab a poster frame from a video File as a small data URL.
+// Grab a poster frame from a video File as a data URL (waits for real dimensions
+// so it isn't a black/empty frame).
 function videoPoster(file) {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file)
     const v = document.createElement('video')
-    v.src = url; v.muted = true
-    v.onloadeddata = () => { v.currentTime = Math.min(0.1, v.duration || 0.1) }
-    v.onseeked = () => {
+    v.src = url; v.muted = true; v.playsInline = true; v.preload = 'metadata'
+    let tries = 0
+    const grab = () => {
+      if (!v.videoWidth && tries++ < 20) { setTimeout(grab, 60); return }
       try {
         const c = document.createElement('canvas')
-        c.width = v.videoWidth; c.height = v.videoHeight
-        c.getContext('2d').drawImage(v, 0, 0)
-        resolve(c.toDataURL('image/jpeg', 0.7))
+        c.width = v.videoWidth || 720; c.height = v.videoHeight || 1280
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height)
+        resolve(c.toDataURL('image/jpeg', 0.75))
       } catch { resolve('') }
       URL.revokeObjectURL(url)
     }
+    v.onloadeddata = () => { try { v.currentTime = Math.min(0.3, (v.duration || 1) / 3) } catch { grab() } }
+    v.onseeked = grab
     v.onerror = () => { resolve(''); URL.revokeObjectURL(url) }
   })
 }
