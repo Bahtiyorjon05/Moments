@@ -141,6 +141,20 @@ CREATE TABLE notifications (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- ── Call signaling (WebRTC over HTTP polling) ───────────
+CREATE TABLE call_signals (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+  from_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  to_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type            TEXT NOT NULL,   -- offer | answer | ice | hangup | reject
+  data            TEXT,            -- JSON payload
+  call_kind       TEXT,            -- 'audio' | 'video'
+  consumed        BOOLEAN DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_call_inbox ON call_signals(to_id, consumed, created_at);
+
 -- ── Indexes for hot paths ───────────────────────────────
 CREATE INDEX idx_posts_user       ON posts(user_id, created_at DESC);
 CREATE INDEX idx_posts_kind       ON posts(kind, created_at DESC);

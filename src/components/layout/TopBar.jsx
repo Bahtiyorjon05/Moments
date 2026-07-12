@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom'
 import { Heart, MessageCircle } from 'lucide-react'
 import Logo from '../ui/Logo.jsx'
 import ThemeToggle from '../ui/ThemeToggle.jsx'
+import { useChat } from '../../store/chat.js'
 
 export default function TopBar({ unread }) {
+  const chatUnread = useChat((s) => s.unread)
   return (
     <header className="md:hidden sticky top-0 z-40 h-14 flex items-center justify-between px-4 glass border-b border-[var(--border)]">
       <Logo size={26} />
@@ -17,8 +19,13 @@ export default function TopBar({ unread }) {
             </span>
           )}
         </Link>
-        <Link to="/messages" className="p-2 rounded-full hover:bg-[var(--surface)]">
+        <Link to="/messages" className="relative p-2 rounded-full hover:bg-[var(--surface)]">
           <MessageCircle size={24} />
+          {chatUnread > 0 && (
+            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full brand-gradient text-white text-[9px] font-bold grid place-items-center">
+              {chatUnread > 9 ? '9+' : chatUnread}
+            </span>
+          )}
         </Link>
       </div>
     </header>

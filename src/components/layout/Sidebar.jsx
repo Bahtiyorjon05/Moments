@@ -10,6 +10,7 @@ import Avatar from '../ui/Avatar.jsx'
 import { useAuth } from '../../store/auth.js'
 import { useUI } from '../../store/ui.js'
 import { usePWA } from '../../store/pwa.js'
+import { useChat } from '../../store/chat.js'
 
 function Item({ to, icon: Icon, label, onClick, badge, end, compact }) {
   const content = (active) => (
@@ -45,6 +46,7 @@ export default function Sidebar({ compact, unread }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme, setCreateOpen, setSearchOpen } = useUI()
   const { promptInstall, showInstall } = usePWA()
+  const chatUnread = useChat((s) => s.unread)
   const [menu, setMenu] = useState(false)
   const loc = useLocation()
 
@@ -63,7 +65,7 @@ export default function Sidebar({ compact, unread }) {
         <Item onClick={() => setSearchOpen(true)} icon={Search} label="Search" compact={compact} />
         <Item to="/explore" icon={Compass} label="Explore" compact={compact} />
         <Item to="/reels" icon={Clapperboard} label="Reels" compact={compact} />
-        <Item to="/messages" icon={MessageCircle} label="Messages" compact={compact} />
+        <Item to="/messages" icon={MessageCircle} label="Messages" badge={chatUnread} compact={compact} />
         <Item to="/notifications" icon={Heart} label="Notifications" badge={unread} compact={compact} />
         <Item onClick={() => setCreateOpen(true)} icon={PlusSquare} label="Create" compact={compact} />
         <NavLink

@@ -95,6 +95,10 @@ export const api = {
   unreadCount: () => get('/notifications/unread-count'),
   markRead: () => post('/notifications/read'),
 
+  // calls (WebRTC signaling)
+  callSignal: (b) => post('/calls/signal', b),
+  callInbox: () => get('/calls/inbox'),
+
   // admin
   adminUsers: () => get('/admin/users'),
   adminStats: () => get('/admin/stats'),

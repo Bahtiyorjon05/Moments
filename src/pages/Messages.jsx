@@ -7,14 +7,21 @@ import Empty from '../components/ui/Empty.jsx'
 import Spinner from '../components/ui/Spinner.jsx'
 import { api } from '../lib/api.js'
 import { useAuth } from '../store/auth.js'
+import { useChat } from '../store/chat.js'
+import { useCall } from '../store/call.js'
+import { useUI } from '../store/ui.js'
 import { timeAgo, clockTime, timeAgoLong } from '../lib/format.js'
 
 export default function Messages() {
   const { id } = useParams()
   const [convos, setConvos] = useState(null)
+  const setActive = useChat((s) => s.setActive)
 
   const load = useCallback(() => api.conversations().then(setConvos).catch(() => setConvos([])), [])
   useEffect(() => { load() }, [load])
+
+  // Mark the open conversation active so its incoming messages don't toast.
+  useEffect(() => { setActive(id || null); return () => setActive(null) }, [id, setActive])
 
   const active = convos?.find((c) => c.id === id)
 
@@ -80,7 +87,15 @@ function ConvoRow({ c, active }) {
 function Thread({ convo, onSent }) {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const startCall = useCall((s) => s.startCall)
+  const { toast } = useUI()
   const [messages, setMessages] = useState(null)
+
+  async function call(kind) {
+    if (!convo.peer) return
+    try { await startCall(convo.peer, convo.id, kind) }
+    catch { toast('Could not access your camera/microphone', 'error') }
+  }
   const [text, setText] = useState('')
   const scrollRef = useRef(null)
   const endRef = useRef(null)
@@ -131,9 +146,9 @@ function Thread({ convo, onSent }) {
           <UserName user={convo.peer || {}} className="text-sm" />
           <p className="text-xs text-[var(--text-faint)]">{timeAgoLong(convo.last_message?.created_at || Date.now())}</p>
         </div>
-        <button className="p-2 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)]"><Phone size={20} /></button>
-        <button className="p-2 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)]"><Video size={20} /></button>
-        <button className="p-2 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)]"><Info size={20} /></button>
+        <button onClick={() => call('audio')} title="Voice call" className="p-2 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)]"><Phone size={20} /></button>
+        <button onClick={() => call('video')} title="Video call" className="p-2 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)]"><Video size={20} /></button>
+        <button className="p-2 rounded-full hover:bg-[var(--surface)] text-[var(--text-muted)] hidden sm:block"><Info size={20} /></button>
       </div>
 
       {/* messages */}

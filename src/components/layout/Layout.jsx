@@ -7,6 +7,11 @@ import Toaster from '../ui/Toaster.jsx'
 import CreateModal from '../create/CreateModal.jsx'
 import SearchModal from '../search/SearchModal.jsx'
 import { api } from '../../lib/api.js'
+import { useChat } from '../../store/chat.js'
+import { useCall } from '../../store/call.js'
+import { useAuth } from '../../store/auth.js'
+import { useUI } from '../../store/ui.js'
+import CallOverlay from '../call/CallOverlay.jsx'
 
 // Routes that want the full immersive width (no centered column).
 const WIDE = ['/reels', '/messages', '/explore']
@@ -14,6 +19,11 @@ const WIDE = ['/reels', '/messages', '/explore']
 export default function Layout() {
   const loc = useLocation()
   const [unread, setUnread] = useState(0)
+  const { user } = useAuth()
+  const { toast } = useUI()
+  const pollChat = useChat((s) => s.poll)
+  const startInbox = useCall((s) => s.startInbox)
+  const stopInbox = useCall((s) => s.stopInbox)
 
   const refreshUnread = useCallback(async () => {
     try {
@@ -27,6 +37,21 @@ export default function Layout() {
     const t = setInterval(refreshUnread, 25000)
     return () => clearInterval(t)
   }, [refreshUnread])
+
+  // Live message notifications (toasts + Messages badge).
+  useEffect(() => {
+    if (!user?.id) return
+    pollChat(user.id, toast)
+    const t = setInterval(() => pollChat(user.id, toast), 8000)
+    return () => clearInterval(t)
+  }, [user?.id, pollChat, toast])
+
+  // Listen for incoming calls (WebRTC signaling inbox).
+  useEffect(() => {
+    if (!user?.id) return
+    startInbox(user.id)
+    return () => stopInbox()
+  }, [user?.id, startInbox, stopInbox])
 
   // Clear the badge when visiting notifications.
   useEffect(() => {
@@ -51,6 +76,7 @@ export default function Layout() {
       <Toaster />
       <CreateModal onCreated={refreshUnread} />
       <SearchModal />
+      <CallOverlay />
     </div>
   )
 }

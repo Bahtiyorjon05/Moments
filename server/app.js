@@ -9,6 +9,8 @@ import storyRoutes from './routes/stories.js'
 import chatRoutes from './routes/chat.js'
 import notifRoutes from './routes/notifications.js'
 import adminRoutes from './routes/admin.js'
+import uploadRoutes from './routes/upload.js'
+import callRoutes from './routes/calls.js'
 import { pool } from './db.js'
 
 dotenv.config()
@@ -37,6 +39,8 @@ export function createApp() {
   app.use('/api/chat', chatRoutes)
   app.use('/api/notifications', notifRoutes)
   app.use('/api/admin', adminRoutes)
+  app.use('/api/upload', uploadRoutes)
+  app.use('/api/calls', callRoutes)
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }))
   app.use((err, _req, res, _next) => {

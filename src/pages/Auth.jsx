@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Zap, Camera, Eye, EyeOff, Check, X } from 'lucide-react'
+import { Sparkles, Zap, Camera, Eye, EyeOff, Check, X, Heart, MessageCircle } from 'lucide-react'
 import Logo, { LogoMark } from '../components/ui/Logo.jsx'
 import Button from '../components/ui/Button.jsx'
 import ThemeToggle from '../components/ui/ThemeToggle.jsx'
@@ -63,26 +63,57 @@ export default function Auth() {
       <Link to="/" className="absolute top-5 left-5 z-20 hidden lg:block"><Logo size={28} /></Link>
       <div className="absolute top-4 right-4 z-20"><ThemeToggle variant="pill" /></div>
 
-      {/* Showcase */}
-      <div className="hidden lg:flex relative overflow-hidden brand-gradient text-white flex-col justify-center p-14">
-        <motion.div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-white/20 blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 8, repeat: Infinity }} />
-        <motion.div className="absolute -bottom-32 right-0 w-[28rem] h-[28rem] rounded-full bg-black/20 blur-3xl"
-          animate={{ scale: [1.1, 1, 1.1] }} transition={{ duration: 10, repeat: Infinity }} />
+      {/* Showcase — dark mesh gradient with floating app-preview cards */}
+      <div className="hidden lg:flex relative overflow-hidden flex-col justify-center p-14 text-white" style={{ background: '#07070d' }}>
+        {/* mesh gradient */}
+        <div className="absolute inset-0" style={{
+          background:
+            'radial-gradient(40rem 40rem at 15% 10%, rgba(255,95,109,0.35), transparent 55%),' +
+            'radial-gradient(38rem 38rem at 85% 30%, rgba(59,130,246,0.32), transparent 55%),' +
+            'radial-gradient(45rem 45rem at 50% 105%, rgba(162,75,207,0.4), transparent 55%)',
+        }} />
+        {/* grid texture */}
+        <div className="absolute inset-0 opacity-[0.15]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px)',
+          backgroundSize: '44px 44px',
+          maskImage: 'radial-gradient(60% 60% at 50% 40%, black, transparent)',
+        }} />
+
+        {/* floating preview cards */}
+        <motion.div className="absolute top-16 right-10 glass rounded-2xl p-3 flex items-center gap-2.5 shadow-2xl"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: [0, -10, 0] }} transition={{ opacity: { duration: 0.6 }, y: { duration: 5, repeat: Infinity } }}>
+          <span className="w-9 h-9 rounded-full bg-[var(--color-brand-coral)] grid place-items-center"><Heart size={16} className="fill-white text-white" /></span>
+          <div className="text-xs"><b>sardor</b> liked your reel</div>
+        </motion.div>
+
+        <motion.div className="absolute bottom-24 right-16 w-52 glass rounded-2xl overflow-hidden shadow-2xl"
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: [0, 12, 0] }} transition={{ opacity: { delay: 0.3, duration: 0.6 }, y: { duration: 6, repeat: Infinity } }}>
+          <div className="flex items-center gap-2 p-2.5">
+            <span className="story-ring rounded-full p-[2px]"><span className="block w-6 h-6 rounded-full bg-[var(--brand-purple)]" style={{ background: 'linear-gradient(135deg,#ff5f6d,#3b82f6)' }} /></span>
+            <span className="text-xs font-bold">nigora</span>
+          </div>
+          <div className="h-24 bg-gradient-to-br from-[#ff5f6d]/40 via-[#a24bcf]/40 to-[#3b82f6]/40" />
+          <div className="flex gap-3 p-2.5 text-white/90"><Heart size={15} /><MessageCircle size={15} /></div>
+        </motion.div>
+
+        {/* copy */}
         <div className="relative z-10 max-w-md">
-          <h1 className="text-5xl font-extrabold leading-[1.05]" style={{ fontFamily: 'var(--font-display)' }}>
-            {isRegister ? 'Join the moment.' : 'Welcome back.'}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-semibold mb-6">
+            <Sparkles size={13} className="text-[#ff9db0]" /> Your best moments, beautifully shared
+          </div>
+          <h1 className="text-[3.4rem] font-extrabold leading-[1.02]" style={{ fontFamily: 'var(--font-display)' }}>
+            {isRegister ? (<>Join the <span className="text-gradient">moment.</span></>) : (<>Welcome <span className="text-gradient">back.</span></>)}
           </h1>
-          <p className="text-lg text-white/85 mt-5">
-            Share photos, videos, reels & stories — and chat in real time with the people who matter.
+          <p className="text-lg text-white/75 mt-5">
+            Photos, videos, reels & stories — plus real-time chat and calls with the people who matter.
           </p>
-          <div className="flex flex-col gap-3 mt-10 text-sm">
+          <div className="flex flex-col gap-3 mt-9 text-sm">
             <Feature icon={Camera} label="Post photos, carousels & reels" />
-            <Feature icon={Sparkles} label="Stories that disappear in 24h" />
-            <Feature icon={Zap} label="Fast, real-time direct messages" />
+            <Feature icon={Sparkles} label="Stories that vanish in 24 hours" />
+            <Feature icon={Zap} label="Real-time messages, calls & video" />
           </div>
         </div>
-        <div className="relative z-10 text-white/70 text-sm mt-14">© 2026 Moments</div>
+        <div className="relative z-10 text-white/50 text-sm mt-12">© 2026 Moments</div>
       </div>
 
       {/* Form */}
