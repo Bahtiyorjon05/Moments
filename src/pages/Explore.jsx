@@ -18,7 +18,7 @@ export default function Explore() {
     <div className="max-w-[935px] mx-auto w-full px-1 sm:px-4 pt-4 sm:pt-8">
       <button
         onClick={() => setSearchOpen(true)}
-        className="w-full max-w-md mx-auto mb-6 hidden sm:flex items-center gap-3 h-11 px-4 rounded-full surface text-[var(--text-muted)] hover:bg-[var(--surface-strong)] transition"
+        className="w-full max-w-md mx-auto mb-6 flex items-center gap-3 h-11 px-4 rounded-full surface text-[var(--text-muted)] hover:bg-[var(--surface-strong)] transition"
       >
         <Search size={18} /> Search people on Moments
       </button>

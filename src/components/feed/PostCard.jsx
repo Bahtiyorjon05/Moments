@@ -36,6 +36,20 @@ export default function PostCard({ post, onChange }) {
   const multi = media.length > 1
   const isVideo = media[idx]?.type === 'video'
   const articleRef = useRef(null)
+  const videoRef = useRef(null)
+
+  // Play a feed video only while it's on screen; pause when scrolled away
+  // (so two reels never play at once).
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v || !isVideo) return
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) v.play().catch(() => {})
+      else v.pause()
+    }, { threshold: 0.6 })
+    io.observe(v)
+    return () => io.disconnect()
+  }, [idx, isVideo])
 
   // Count a view once the post is actually seen.
   useEffect(() => {
@@ -136,11 +150,12 @@ export default function PostCard({ post, onChange }) {
             {media[idx]?.type === 'video' ? (
               <motion.video
                 key={idx}
+                ref={videoRef}
                 src={media[idx]?.url}
                 poster={media[idx]?.poster}
                 initial={{ opacity: 0.4 }} animate={{ opacity: 1 }}
                 className="absolute inset-0 w-full h-full object-cover"
-                muted={videoMuted} loop autoPlay playsInline
+                muted={videoMuted} loop playsInline
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (

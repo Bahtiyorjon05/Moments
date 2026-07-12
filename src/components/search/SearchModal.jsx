@@ -12,13 +12,16 @@ export default function SearchModal() {
   const { searchOpen, setSearchOpen } = useUI()
   const [q, setQ] = useState('')
   const [results, setResults] = useState([])
+  const [suggested, setSuggested] = useState([])
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const inputRef = useRef(null)
 
   useEffect(() => {
-    if (searchOpen) setTimeout(() => inputRef.current?.focus(), 100)
-    else { setQ(''); setResults([]) }
+    if (searchOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100)
+      api.suggestions().then(setSuggested).catch(() => {})
+    } else { setQ(''); setResults([]) }
   }, [searchOpen])
 
   useEffect(() => {
@@ -36,6 +39,8 @@ export default function SearchModal() {
     navigate(`/u/${username}`)
   }
 
+  const list = q.trim() ? results : suggested
+
   return (
     <Modal open={searchOpen} onClose={() => setSearchOpen(false)} bare maxWidth={480}>
       <div className="card overflow-hidden">
@@ -52,19 +57,22 @@ export default function SearchModal() {
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto p-2">
+          {!q && list.length > 0 && (
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-faint)] px-2.5 pt-1 pb-2">Suggested</p>
+          )}
           {loading && <div className="grid place-items-center py-8"><Spinner size={22} /></div>}
           {!loading && q && results.length === 0 && (
             <p className="text-center text-sm text-[var(--text-muted)] py-8">No results for "{q}"</p>
           )}
-          {!loading && !q && (
+          {!loading && !q && list.length === 0 && (
             <p className="text-center text-sm text-[var(--text-faint)] py-8">Search for friends and creators.</p>
           )}
-          {results.map((u) => (
+          {!loading && list.map((u) => (
             <button key={u.id} onClick={() => go(u.username)} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--surface)] transition text-left">
               <Avatar src={u.avatar_url} alt={u.username} size={44} />
               <div className="min-w-0 flex-1">
                 <UserName user={u} className="text-sm" link={false} />
-                <p className="text-xs text-[var(--text-muted)] truncate">{u.name} · {u.follower_count} followers</p>
+                <p className="text-xs text-[var(--text-muted)] truncate">{u.name}{u.follower_count != null ? ` · ${u.follower_count} followers` : ''}</p>
               </div>
             </button>
           ))}

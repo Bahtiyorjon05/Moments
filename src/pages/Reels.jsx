@@ -127,8 +127,8 @@ function Reel({ reel, muted, setMuted }) {
         <button onClick={() => setMuted((m) => !m)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/45 backdrop-blur grid place-items-center text-white z-10">
           {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
         </button>
-        <div className="absolute top-4 left-4 z-10 text-white">
-          <PostMenu post={reel} onDelete={del} />
+        <div className="absolute top-4 left-4 z-20">
+          <PostMenu post={reel} onDelete={del} variant="overlay" align="left" size={18} />
         </div>
 
         {/* gradient + meta */}
