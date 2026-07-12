@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { query } from '../db.js'
 
 const SECRET = process.env.JWT_SECRET || 'dev_secret'
 
@@ -27,4 +28,15 @@ export function optionalAuth(req, _res, next) {
     try { req.user = jwt.verify(token, SECRET) } catch { /* ignore */ }
   }
   next()
+}
+
+// Admin gate — must be chained after requireAuth. Checks is_admin in the DB.
+export async function requireAdmin(req, res, next) {
+  try {
+    const { rows } = await query('SELECT is_admin FROM users WHERE id = $1', [req.user.id])
+    if (!rows[0]?.is_admin) return res.status(403).json({ error: 'Admins only' })
+    next()
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
 }

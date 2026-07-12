@@ -8,6 +8,7 @@ import userRoutes from './routes/users.js'
 import storyRoutes from './routes/stories.js'
 import chatRoutes from './routes/chat.js'
 import notifRoutes from './routes/notifications.js'
+import adminRoutes from './routes/admin.js'
 import { pool } from './db.js'
 
 dotenv.config()
@@ -18,7 +19,7 @@ export function createApp() {
   const app = express()
 
   app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(',') || true, credentials: true }))
-  app.use(express.json({ limit: '12mb' })) // room for base64 image uploads
+  app.use(express.json({ limit: '30mb' })) // room for base64 image + short video uploads
 
   app.get('/api/health', async (_req, res) => {
     try {
@@ -35,6 +36,7 @@ export function createApp() {
   app.use('/api/stories', storyRoutes)
   app.use('/api/chat', chatRoutes)
   app.use('/api/notifications', notifRoutes)
+  app.use('/api/admin', adminRoutes)
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }))
   app.use((err, _req, res, _next) => {

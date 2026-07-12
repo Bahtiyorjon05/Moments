@@ -14,6 +14,7 @@ import Settings from './pages/Settings.jsx'
 import PostView from './pages/PostView.jsx'
 import Messages from './pages/Messages.jsx'
 import Notifications from './pages/Notifications.jsx'
+import Admin from './pages/Admin.jsx'
 import { useAuth } from './store/auth.js'
 import { FullSpinner } from './components/ui/Spinner.jsx'
 import { LogoMark } from './components/ui/Logo.jsx'
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/saved" element={<Saved />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/p/:id" element={<PostView />} />
           <Route path="/u/:username" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />

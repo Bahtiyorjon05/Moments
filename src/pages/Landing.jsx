@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -10,8 +9,6 @@ import Button from '../components/ui/Button.jsx'
 import ThemeToggle from '../components/ui/ThemeToggle.jsx'
 import Verified from '../components/ui/Verified.jsx'
 import InstallButton from '../components/pwa/InstallButton.jsx'
-import { useAuth } from '../store/auth.js'
-import { useUI } from '../store/ui.js'
 
 const fade = {
   hidden: { opacity: 0, y: 24 },
@@ -20,21 +17,6 @@ const fade = {
 
 export default function Landing() {
   const navigate = useNavigate()
-  const { login } = useAuth()
-  const { toast } = useUI()
-  const [busy, setBusy] = useState(false)
-
-  async function tryDemo() {
-    setBusy(true)
-    try {
-      await login('you', 'moments123')
-      navigate('/')
-    } catch {
-      toast('Could not start demo — is the API running?', 'error')
-      setBusy(false)
-    }
-  }
-
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Header */}
@@ -56,6 +38,12 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 grid md:grid-cols-2 gap-12 items-center">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+          <motion.div className="absolute top-6 -left-16 w-72 h-72 rounded-full blur-3xl" style={{ background: 'rgba(255,95,109,0.20)' }}
+            animate={{ y: [0, 30, 0], scale: [1, 1.1, 1] }} transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }} />
+          <motion.div className="absolute -bottom-10 right-0 w-80 h-80 rounded-full blur-3xl" style={{ background: 'rgba(59,130,246,0.20)' }}
+            animate={{ y: [0, -36, 0], scale: [1.05, 1, 1.05] }} transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }} />
+        </div>
         <div className="text-center md:text-left">
           <motion.span
             variants={fade} initial="hidden" animate="show"
@@ -87,8 +75,8 @@ export default function Landing() {
             <Button size="lg" onClick={() => navigate('/auth')} className="w-full sm:w-auto">
               Get started — it's free <ArrowRight size={18} />
             </Button>
-            <Button size="lg" variant="soft" onClick={tryDemo} loading={busy} className="w-full sm:w-auto">
-              <Play size={16} /> Try live demo
+            <Button size="lg" variant="soft" onClick={() => navigate('/auth')} className="w-full sm:w-auto">
+              Log in
             </Button>
           </motion.div>
 
@@ -121,6 +109,15 @@ export default function Landing() {
             <div className="text-xs"><b>leoblanc</b> · trail run this weekend?</div>
           </FloatingCard>
         </motion.div>
+      </section>
+
+      {/* Feature pills */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-4">
+        <div className="flex flex-wrap justify-center gap-2.5">
+          {['📸 Photos', '🎬 Reels', '⭕ Stories', '💬 Live chat', '🧭 Explore', '🔖 Collections', '🌗 Dark mode', '📲 Installable'].map((t) => (
+            <span key={t} className="px-4 py-2 rounded-full surface text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)] hover:-translate-y-0.5 transition">{t}</span>
+          ))}
+        </div>
       </section>
 
       {/* Features */}
@@ -173,8 +170,8 @@ export default function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
               <InstallButton variant="solid" size="lg" label="Install the app" className="w-full sm:w-auto !bg-white !text-[#1a1030]" />
-              <Button size="lg" variant="ghost" onClick={tryDemo} className="w-full sm:w-auto !text-white hover:!bg-white/15">
-                Open in browser <ArrowRight size={16} />
+              <Button size="lg" variant="ghost" onClick={() => navigate('/auth')} className="w-full sm:w-auto !text-white hover:!bg-white/15">
+                Create free account <ArrowRight size={16} />
               </Button>
             </div>
           </div>

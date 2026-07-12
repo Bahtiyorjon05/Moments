@@ -6,9 +6,9 @@ import { useUI } from '../../store/ui.js'
 // Renders nothing once installed. Otherwise a button that installs the PWA
 // (native prompt on Android/desktop, how-to sheet on iOS).
 export default function InstallButton({ variant = 'primary', size = 'md', className = '', label = 'Install app', icon = true }) {
-  const { installed, promptInstall } = usePWA()
+  const { promptInstall, showInstall } = usePWA()
   const { toast } = useUI()
-  if (installed) return null
+  if (!showInstall()) return null
 
   async function onClick() {
     const r = await promptInstall()

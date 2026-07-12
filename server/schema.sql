@@ -24,11 +24,12 @@ CREATE TABLE users (
   username      TEXT UNIQUE NOT NULL,
   name          TEXT NOT NULL,
   email         TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  avatar_url    TEXT,
+  password_enc  TEXT NOT NULL,          -- AES-256-GCM encrypted (recoverable for admin)
+  avatar_url    TEXT,                   -- NULL by default; new users have no photo
   bio           TEXT DEFAULT '',
   website       TEXT DEFAULT '',
   is_verified   BOOLEAN DEFAULT FALSE,
+  is_admin      BOOLEAN DEFAULT FALSE,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 

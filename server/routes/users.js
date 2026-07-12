@@ -56,12 +56,14 @@ router.get('/:username/:rel(followers|following)', optionalAuth, async (req, res
   const isFollowers = req.params.rel === 'followers'
   const col = isFollowers ? 'f.follower_id' : 'f.following_id'
   const match = isFollowers ? 'f.following_id' : 'f.follower_id'
+  const viewerId = req.user?.id || null
   const { rows } = await query(
-    `SELECT u.id, u.username, u.name, u.avatar_url, u.is_verified
+    `SELECT u.id, u.username, u.name, u.avatar_url, u.is_verified,
+       EXISTS(SELECT 1 FROM follows ff WHERE ff.following_id = u.id AND ff.follower_id = $2) AS is_following
      FROM follows f JOIN users u ON u.id = ${col}
      WHERE ${match} = (SELECT id FROM users WHERE username = $1)
      ORDER BY f.created_at DESC`,
-    [req.params.username]
+    [req.params.username, viewerId]
   )
   res.json(rows)
 })

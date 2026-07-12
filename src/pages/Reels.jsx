@@ -19,7 +19,15 @@ export default function Reels() {
   if (reels === null) return <FullSpinner label="Loading reels…" />
 
   return (
-    <div className="h-[calc(100vh-4rem)] md:h-screen overflow-y-scroll snap-y snap-mandatory no-scrollbar">
+    <div className="h-[calc(100dvh-4rem)] md:h-screen overflow-y-scroll snap-y snap-mandatory no-scrollbar">
+      {reels.length === 0 && (
+        <div className="h-full grid place-items-center text-center px-6 text-[var(--text-muted)]">
+          <div>
+            <p className="font-bold text-lg text-[var(--text)]">No reels yet</p>
+            <p className="text-sm mt-1">Create a reel by uploading a video from the + button.</p>
+          </div>
+        </div>
+      )}
       {reels.map((r) => (
         <Reel key={r.id} reel={r} muted={muted} setMuted={setMuted} />
       ))}
@@ -73,8 +81,8 @@ function Reel({ reel, muted, setMuted }) {
   const video = reel.media?.[0]
 
   return (
-    <div ref={ref} className="snap-start h-full w-full grid place-items-center py-3">
-      <div className="relative h-full max-h-[860px] aspect-[9/16] rounded-2xl overflow-hidden bg-black shadow-2xl">
+    <div ref={ref} className="snap-start h-full w-full relative md:grid md:place-items-center md:py-3">
+      <div className="relative w-full h-full md:w-auto md:max-h-[860px] md:aspect-[9/16] md:rounded-2xl overflow-hidden bg-black md:shadow-2xl">
         <video
           ref={videoRef}
           src={video?.url}
@@ -96,7 +104,7 @@ function Reel({ reel, muted, setMuted }) {
         </button>
 
         {/* gradient + meta */}
-        <div className="absolute inset-x-0 bottom-0 p-4 pr-16 bg-gradient-to-t from-black/70 via-black/20 to-transparent text-white">
+        <div className="absolute inset-x-0 bottom-0 pt-10 px-4 pb-5 pr-16 bg-gradient-to-t from-black/80 via-black/30 to-transparent text-white z-10">
           <div className="flex items-center gap-2.5 mb-2">
             <Avatar src={reel.author.avatar_url} alt={reel.author.username} size={36} to={`/u/${reel.author.username}`} />
             <UserName user={reel.author} className="text-sm text-white" />

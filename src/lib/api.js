@@ -95,5 +95,10 @@ export const api = {
   unreadCount: () => get('/notifications/unread-count'),
   markRead: () => post('/notifications/read'),
 
+  // admin
+  adminUsers: () => get('/admin/users'),
+  adminStats: () => get('/admin/stats'),
+  adminDeleteUser: (id) => del(`/admin/users/${id}`),
+
   health: () => get('/health'),
 }

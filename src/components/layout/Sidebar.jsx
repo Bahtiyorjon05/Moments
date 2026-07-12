@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Home, Search, Compass, Clapperboard, MessageCircle, Heart,
-  PlusSquare, Menu, Moon, Sun, LogOut, Bookmark, Settings, Download,
+  PlusSquare, Menu, Moon, Sun, LogOut, Bookmark, Settings, Download, ShieldCheck,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Logo, { LogoMark } from '../ui/Logo.jsx'
@@ -44,7 +44,7 @@ function Item({ to, icon: Icon, label, onClick, badge, end, compact }) {
 export default function Sidebar({ compact, unread }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme, setCreateOpen, setSearchOpen } = useUI()
-  const { installed, promptInstall } = usePWA()
+  const { promptInstall, showInstall } = usePWA()
   const [menu, setMenu] = useState(false)
   const loc = useLocation()
 
@@ -81,7 +81,7 @@ export default function Sidebar({ compact, unread }) {
 
       {/* Always-visible theme switch + install */}
       <div className="flex flex-col gap-1 mb-1">
-        {!installed && (
+        {showInstall() && (
           <Item onClick={promptInstall} icon={Download} label="Install app" compact={compact} />
         )}
         <Item onClick={toggleTheme} icon={theme === 'dark' ? Sun : Moon} label={theme === 'dark' ? 'Light mode' : 'Dark mode'} compact={compact} />
@@ -97,6 +97,7 @@ export default function Sidebar({ compact, unread }) {
               transition={{ type: 'spring', stiffness: 360, damping: 26 }}
               className="absolute bottom-full mb-2 left-0 w-56 card p-1.5 origin-bottom-left"
             >
+              {user?.is_admin && <MenuRow icon={ShieldCheck} label="Admin dashboard" to="/admin" onNav={() => setMenu(false)} />}
               <MenuRow icon={Bookmark} label="Saved" to="/saved" onNav={() => setMenu(false)} />
               <MenuRow icon={theme === 'dark' ? Sun : Moon} label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={toggleTheme} />
               <MenuRow icon={Settings} label="Edit profile" to="/settings" onNav={() => setMenu(false)} />

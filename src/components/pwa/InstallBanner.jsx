@@ -7,10 +7,10 @@ import { usePWA } from '../../store/pwa.js'
 
 // Dismissible "install the app" card for the top of the feed.
 export default function InstallBanner() {
-  const { installed } = usePWA()
+  const { showInstall } = usePWA()
   const [dismissed, setDismissed] = useState(() => localStorage.getItem('moments_install_dismissed') === '1')
 
-  if (installed || dismissed) return null
+  if (!showInstall() || dismissed) return null
 
   function dismiss() {
     localStorage.setItem('moments_install_dismissed', '1')

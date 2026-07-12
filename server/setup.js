@@ -57,7 +57,7 @@ try {
     await ensureDatabase()
     await applySchema()
   }
-  console.log('\n✅ Database ready. Run `npm run db:seed` to load demo data.')
+  console.log('\n✅ Database ready. Sign up in the app — the first account becomes the admin.')
 } catch (err) {
   console.error('\n✗ Setup failed:', err.message)
   process.exit(1)

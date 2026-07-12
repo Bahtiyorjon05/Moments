@@ -14,6 +14,8 @@ export const usePWA = create((set, get) => ({
 
   // Wire up once at app boot.
   init: () => {
+    if (isStandalone()) set({ installed: true })
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault()
       set({ deferredPrompt: e, canInstall: true })
@@ -21,6 +23,20 @@ export const usePWA = create((set, get) => ({
     window.addEventListener('appinstalled', () => {
       set({ installed: true, canInstall: false, deferredPrompt: null })
     })
+    // Detect an already-installed PWA even when viewing in a browser tab (Chrome/Android).
+    navigator.getInstalledRelatedApps?.().then((apps) => {
+      if (apps && apps.length > 0) set({ installed: true, canInstall: false })
+    }).catch(() => {})
+    // React to entering standalone mode.
+    window.matchMedia?.('(display-mode: standalone)').addEventListener?.('change', (e) => {
+      if (e.matches) set({ installed: true })
+    })
+  },
+
+  // Whether an install affordance should be shown at all.
+  showInstall: () => {
+    const { installed, canInstall, ios } = get()
+    return !installed && (canInstall || ios)
   },
 
   // Trigger native prompt, or open the iOS how-to sheet.

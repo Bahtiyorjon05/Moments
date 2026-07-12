@@ -9,7 +9,6 @@
     "dev:web": "vite",
     "dev:api": "node --watch server/index.js",
     "db:setup": "node server/setup.js",
-    "db:seed": "node server/seed.js",
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.js"
