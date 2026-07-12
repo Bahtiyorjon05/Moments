@@ -81,6 +81,11 @@ export const api = {
   search: (q) => get(`/users/search?q=${encodeURIComponent(q)}`),
   updateProfile: (b) => patch('/users/me/profile', b),
 
+  // close friends
+  closeFriends: () => get('/users/me/close-friends'),
+  addClose: (username) => post(`/users/${username}/close`),
+  removeClose: (username) => del(`/users/${username}/close`),
+
   // stories
   stories: () => get('/stories'),
   addStory: (b) => post('/stories', b),
@@ -93,10 +98,17 @@ export const api = {
   // chat
   conversations: () => get('/chat/conversations'),
   messages: (id) => get(`/chat/conversations/${id}/messages`),
-  sendMessage: (id, body, replyToId) => post(`/chat/conversations/${id}/messages`, { body, replyToId }),
+  sendMessage: (id, payload) => post(`/chat/conversations/${id}/messages`, payload),
   editMessage: (id, body) => patch(`/chat/messages/${id}`, { body }),
   deleteMessage: (id) => del(`/chat/messages/${id}`),
+  reactMessage: (id, emoji) => post(`/chat/messages/${id}/react`, { emoji }),
+  unreactMessage: (id) => del(`/chat/messages/${id}/react`),
+  createGroup: (b) => post('/chat/groups', b),
   startChat: (username) => post(`/chat/with/${username}`),
+
+  // analytics
+  trackView: (postId, watchMs = 0) => post('/analytics/view', { postId, watchMs }),
+  analytics: () => get('/analytics'),
 
   // notifications
   notifications: () => get('/notifications'),

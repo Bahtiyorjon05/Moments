@@ -49,21 +49,33 @@ function Reel({ reel, muted, setMuted }) {
   const [comments, setComments] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
   const [gone, setGone] = useState(false)
+  const watchMs = useRef(0)
+  const playStart = useRef(0)
+  const viewed = useRef(false)
 
   useEffect(() => {
     const el = ref.current
+    const flush = () => {
+      if (playStart.current) { watchMs.current += Date.now() - playStart.current; playStart.current = 0 }
+    }
     const io = new IntersectionObserver(
       ([e]) => {
         const v = videoRef.current
         if (!v) return
-        if (e.isIntersecting) { v.play().catch(() => {}); setPlaying(true) }
-        else { v.pause() }
+        if (e.isIntersecting) {
+          v.play().catch(() => {}); setPlaying(true)
+          playStart.current = Date.now()
+          if (!viewed.current) { viewed.current = true; api.trackView(reel.id, 0).catch(() => {}) }
+        } else { v.pause(); flush() }
       },
       { threshold: 0.6 }
     )
     io.observe(el)
-    return () => io.disconnect()
-  }, [])
+    return () => {
+      io.disconnect(); flush()
+      if (watchMs.current > 400) api.trackView(reel.id, watchMs.current).catch(() => {})
+    }
+  }, [reel.id])
 
   function togglePlay() {
     const v = videoRef.current

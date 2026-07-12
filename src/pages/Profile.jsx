@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Grid3x3, Bookmark, Settings, LinkIcon, Camera, UserX, Menu, LogOut, ShieldCheck, Moon, Sun } from 'lucide-react'
+import { Grid3x3, Bookmark, Settings, LinkIcon, Camera, UserX, Menu, LogOut, ShieldCheck, Moon, Sun, TrendingUp, Star } from 'lucide-react'
 import Avatar from '../components/ui/Avatar.jsx'
 import Verified from '../components/ui/Verified.jsx'
 import Button from '../components/ui/Button.jsx'
 import PostGrid from '../components/feed/PostGrid.jsx'
 import Empty from '../components/ui/Empty.jsx'
 import FollowListModal from '../components/feed/FollowListModal.jsx'
+import CloseFriendsModal from '../components/feed/CloseFriendsModal.jsx'
 import { FullSpinner } from '../components/ui/Spinner.jsx'
 import { api } from '../lib/api.js'
 import { useAuth } from '../store/auth.js'
@@ -45,6 +46,7 @@ export default function Profile() {
   const [notFound, setNotFound] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [followList, setFollowList] = useState(null) // 'followers' | 'following' | null
+  const [closeOpen, setCloseOpen] = useState(false)
 
   const isMe = me?.username === username
 
@@ -124,6 +126,8 @@ export default function Profile() {
                             className="absolute right-0 top-full mt-2 w-52 card p-1.5 z-30 origin-top-right"
                           >
                             {me?.is_admin && <MRow icon={ShieldCheck} label="Admin dashboard" onClick={() => navigate('/admin')} />}
+                            <MRow icon={TrendingUp} label="Analytics" onClick={() => navigate('/analytics')} />
+                            <MRow icon={Star} label="Close friends" onClick={() => { setMenuOpen(false); setCloseOpen(true) }} />
                             <MRow icon={Bookmark} label="Saved" onClick={() => navigate('/saved')} />
                             <MRow icon={Settings} label="Settings" onClick={() => navigate('/settings')} />
                             <MRow icon={theme === 'dark' ? Sun : Moon} label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={toggleTheme} />
@@ -201,6 +205,7 @@ export default function Profile() {
         username={username}
         type={followList}
       />
+      <CloseFriendsModal open={closeOpen} onClose={() => setCloseOpen(false)} />
     </div>
   )
 }

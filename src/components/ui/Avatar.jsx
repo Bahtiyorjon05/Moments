@@ -27,7 +27,9 @@ export default function Avatar({ src, alt = '', size = 40, ring = false, to, onC
       ? 'bg-[var(--border-strong)]'
       : ring === 'add'
         ? 'bg-[var(--border-strong)]'
-        : 'story-ring'
+        : ring === 'close'
+          ? 'bg-emerald-500'
+          : 'story-ring'
 
   const content = ring ? (
     <span

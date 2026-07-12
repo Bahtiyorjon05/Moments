@@ -15,6 +15,7 @@ router.post('/', async (req, res) => {
         allowedContentTypes: [
           'image/jpeg', 'image/png', 'image/webp', 'image/gif',
           'video/mp4', 'video/webm', 'video/quicktime', 'video/ogg',
+          'audio/webm', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/aac',
         ],
         maximumSizeInBytes: 80 * 1024 * 1024, // 80 MB
         addRandomSuffix: true,

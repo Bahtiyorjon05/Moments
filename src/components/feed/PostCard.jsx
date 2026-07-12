@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Heart, MessageCircle, Send, Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Volume2, VolumeX } from 'lucide-react'
@@ -35,6 +35,19 @@ export default function PostCard({ post, onChange }) {
   const media = post.media || []
   const multi = media.length > 1
   const isVideo = media[idx]?.type === 'video'
+  const articleRef = useRef(null)
+
+  // Count a view once the post is actually seen.
+  useEffect(() => {
+    const el = articleRef.current
+    if (!el) return
+    let fired = false
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !fired) { fired = true; api.trackView(post.id).catch(() => {}); io.disconnect() }
+    }, { threshold: 0.6 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [post.id])
 
   async function saveEdit() {
     setEditing(false)
@@ -98,7 +111,7 @@ export default function PostCard({ post, onChange }) {
   }
 
   return (
-    <article className="card overflow-hidden mb-6 animate-float-in">
+    <article ref={articleRef} className="card overflow-hidden mb-6 animate-float-in">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Avatar src={post.author.avatar_url} alt={post.author.username} size={40} ring="unseen" to={`/u/${post.author.username}`} />

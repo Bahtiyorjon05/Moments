@@ -97,8 +97,25 @@ CREATE TABLE stories (
   user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   media_url  TEXT NOT NULL,
   type       TEXT NOT NULL DEFAULT 'image' CHECK (type IN ('image','video')),
+  audience   TEXT NOT NULL DEFAULT 'all',  -- 'all' | 'close'
   created_at TIMESTAMPTZ DEFAULT now(),
   expires_at TIMESTAMPTZ DEFAULT now() + INTERVAL '24 hours'
+);
+
+CREATE TABLE close_friends (
+  owner_id   UUID REFERENCES users(id) ON DELETE CASCADE,
+  friend_id  UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (owner_id, friend_id)
+);
+
+CREATE TABLE post_views (
+  post_id    UUID REFERENCES posts(id) ON DELETE CASCADE,
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  views      INT DEFAULT 1,
+  watch_ms   INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (post_id, user_id)
 );
 
 CREATE TABLE story_views (
@@ -132,10 +149,19 @@ CREATE TABLE messages (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   sender_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body            TEXT NOT NULL,
+  body            TEXT,
+  media_url       TEXT,
+  media_type      TEXT,            -- image | video | audio
   reply_to_id     UUID REFERENCES messages(id) ON DELETE SET NULL,
   edited          BOOLEAN DEFAULT FALSE,
   created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE message_reactions (
+  message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  emoji      TEXT NOT NULL,
+  PRIMARY KEY (message_id, user_id)
 );
 
 -- ── Notifications ───────────────────────────────────────

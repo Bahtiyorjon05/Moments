@@ -86,6 +86,31 @@ router.delete('/:username/follow', requireAuth, async (req, res) => {
   res.json({ is_following: false })
 })
 
+// ── Close Friends ───────────────────────────────────────
+// GET /api/users/me/close-friends — my close-friends list
+router.get('/me/close-friends', requireAuth, async (req, res) => {
+  const { rows } = await query(
+    `SELECT u.id, u.username, u.name, u.avatar_url, u.is_verified
+     FROM close_friends cf JOIN users u ON u.id = cf.friend_id
+     WHERE cf.owner_id = $1 ORDER BY cf.created_at DESC`,
+    [req.user.id]
+  )
+  res.json(rows)
+})
+
+router.post('/:username/close', requireAuth, async (req, res) => {
+  const t = await query('SELECT id FROM users WHERE username = $1', [req.params.username])
+  if (!t.rows[0]) return res.status(404).json({ error: 'User not found' })
+  await query('INSERT INTO close_friends (owner_id, friend_id) VALUES ($1,$2) ON CONFLICT DO NOTHING', [req.user.id, t.rows[0].id])
+  res.json({ is_close: true })
+})
+router.delete('/:username/close', requireAuth, async (req, res) => {
+  const t = await query('SELECT id FROM users WHERE username = $1', [req.params.username])
+  if (!t.rows[0]) return res.status(404).json({ error: 'User not found' })
+  await query('DELETE FROM close_friends WHERE owner_id = $1 AND friend_id = $2', [req.user.id, t.rows[0].id])
+  res.json({ is_close: false })
+})
+
 // PATCH /api/users/me — update own profile
 router.patch('/me/profile', requireAuth, async (req, res) => {
   const { name, bio, website, avatar_url } = req.body || {}
